@@ -32,9 +32,9 @@ const copyIconsIfExists = (sourceDir, targetDir, filenames) => {
       }
       
       fs.copyFileSync(sourcePath, targetPath);
-      console.log(`✅ Копирование ${filename} завершено`);
+      console.log(`✅ Copy ${filename} completed`);
     } else {
-      console.log(`⚠️ Файл ${filename} не найден в исходной директории`);
+      console.log(`⚠️ File ${filename} not found in source directory`);
     }
   });
 };

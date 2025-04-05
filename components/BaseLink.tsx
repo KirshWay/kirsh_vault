@@ -10,7 +10,7 @@ interface Props extends Omit<LinkProps, 'href'> {
   className?: string;
 }
 
-export default function BaseLink({ href, children, className, ...rest }: Props) {
+export const BaseLink = ({ href, children, className, ...rest }: Props) => {
   const processedHref = href.startsWith('http') || href.startsWith('#') 
     ? href
     : createPath(href);
