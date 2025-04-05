@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting - Kirsh Vault</title>
+  <script>
+    const pathSegmentsToKeep = 0;
+    
+    const currentUrl = window.location.pathname;
+    const basePathIndex = currentUrl.indexOf("/kirsh_vault");
+    
+    if (basePathIndex !== -1) {
+      const path = currentUrl.slice(basePathIndex + "/kirsh_vault".length);
+      
+      const redirectUrl = window.location.origin +
+        '/kirsh_vault/#' + path +
+        window.location.search;
+        
+      window.location.replace(redirectUrl);
+    } else {
+      window.location.replace(window.location.origin + '/kirsh_vault/');
+    }
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      color: #333;
+      background-color: #f7f7f7;
+    }
+    .container {
+      max-width: 600px;
+      padding: 2rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Redirecting...</h1>
+    <p>Please wait, you will be redirected to the home page.</p>
+    <noscript>
+      <p>JavaScript is required to continue. Please <a href="/kirsh_vault/">navigate to the home page manually</a>.</p>
+    </noscript>
+  </div>
+</body>
+</html> 
