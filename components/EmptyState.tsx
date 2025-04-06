@@ -1,11 +1,12 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 
 type Props = {
   onAddClick: () => void;
-}
+};
 
 export const EmptyState = ({ onAddClick }: Props) => {
   return (
@@ -23,4 +24,4 @@ export const EmptyState = ({ onAddClick }: Props) => {
       </Button>
     </div>
   );
-} 
+};

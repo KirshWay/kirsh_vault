@@ -1,16 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { ItemCategory } from '@/lib/db';
+
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dropzone } from '@/components/ui/dropzone';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { DefaultValues, FormValues } from '@/types';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -19,20 +33,11 @@ const formSchema = z.object({
   images: z.array(z.string()).optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-type DefaultValues = Partial<{
-  name: string;
-  description: string;
-  category: ItemCategory;
-  images: string[];
-}>;
-
 type Props = {
   defaultValues?: DefaultValues;
   onSubmit: (data: FormValues) => void;
   onCancel: () => void;
-}
+};
 
 export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
   const [images, setImages] = useState<string[]>(defaultValues?.images || []);
@@ -58,7 +63,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
   const handleSubmit = (data: FormValues) => {
     const formData = {
       ...data,
-      images
+      images,
     };
 
     onSubmit(formData);
@@ -89,10 +94,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
@@ -108,7 +110,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -116,10 +118,10 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Optional description" 
-                      className="resize-none min-h-[120px]" 
-                      {...field} 
+                    <Textarea
+                      placeholder="Optional description"
+                      className="resize-none min-h-[120px]"
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -127,18 +129,18 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
               )}
             />
           </div>
-          
+
           <div className="md:col-span-1">
             <FormItem>
               <FormLabel>Images</FormLabel>
               <FormControl>
-                <Dropzone 
+                <Dropzone
                   images={images}
                   onChange={handleImagesChange}
                   maxFiles={5}
                   maxSize={10 * 1024 * 1024}
                   accept={{
-                    'image/*': ['.jpeg', '.jpg', '.png', '.webp']
+                    'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
                   }}
                 />
               </FormControl>
@@ -151,11 +153,9 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">
-            {defaultValues?.name ? 'Update' : 'Add'} Item
-          </Button>
+          <Button type="submit">{defaultValues?.name ? 'Update' : 'Add'} Item</Button>
         </div>
       </form>
     </Form>
   );
-} 
+};

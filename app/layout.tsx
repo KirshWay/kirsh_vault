@@ -1,28 +1,25 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { Toaster } from "react-hot-toast";
-import { NavMenu } from "@/components/NavMenu";
+import './globals.css';
 
-const inter = Inter({ subsets: ["latin"] });
+import { Metadata } from 'next';
+import { Toaster } from 'react-hot-toast';
+
+import { NavMenu } from '@/components/NavMenu';
+import { DbProvider } from '@/lib/context/DbContext';
 
 export const metadata: Metadata = {
-  title: "Kirsh Vault",
-  description: "Управляйте вашей коллекцией книг, фильмов и предметов.",
-  manifest: "/manifest.json",
+  title: 'Kirsh Vault',
+  description: 'Your personal collection application',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
-      <body className={inter.className}>
-        <NavMenu />
-        <main className="py-4">{children}</main>
-        <Toaster position="bottom-center" />
+    <html lang="en">
+      <body>
+        <DbProvider>
+          <NavMenu />
+          {children}
+          <Toaster position="bottom-right" />
+        </DbProvider>
       </body>
     </html>
   );

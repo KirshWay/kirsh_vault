@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { CollectionItem } from "@/lib/db";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, Pencil, Trash, Image as ImageIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ImageViewer } from "@/components/ui/image-viewer";
+import { motion } from 'framer-motion';
+import { ChevronDown, Image as ImageIcon, Pencil, Trash } from 'lucide-react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { ImageViewer } from '@/components/ui/image-viewer';
+import { CATEGORIES } from '@/lib/constants';
+import { CollectionItem } from '@/lib/db';
+import { cn } from '@/lib/utils';
 
 type Props = {
   item: CollectionItem;
@@ -15,23 +17,17 @@ type Props = {
   onEdit: () => void;
   isExpanded: boolean;
   onExpand: () => void;
-}
+};
 
-export const CollectionItemComponent = ({ 
-  item, 
-  onDelete, 
+export const CollectionItemComponent = ({
+  item,
+  onDelete,
   onEdit,
-  isExpanded, 
-  onExpand 
+  isExpanded,
+  onExpand,
 }: Props) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const categoryLabels: Record<string, string> = {
-    book: "Book",
-    movie: "Movie",
-    other: "Other",
-  };
 
   const images = item.images || [];
   const hasImages = images.length > 0;
@@ -54,25 +50,22 @@ export const CollectionItemComponent = ({
       >
         <Card className="h-full flex flex-col overflow-hidden">
           {mainImage ? (
-            <div 
+            <div
               className="w-full h-48 relative overflow-hidden group cursor-pointer"
               onClick={() => openImageViewer(0)}
             >
-              <img
-                src={mainImage}
-                alt={item.name}
-                className="w-full h-full object-cover"
-              />
-              
+              <img src={mainImage} alt={item.name} className="w-full h-full object-cover" />
+
               {additionalImagesCount > 0 && (
                 <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 text-white text-xs rounded-full flex items-center gap-1">
-                  <ImageIcon size={12} />
-                  +{additionalImagesCount}
+                  <ImageIcon size={12} />+{additionalImagesCount}
                 </div>
               )}
-              
+
               <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white text-sm font-medium">View {images.length > 1 ? 'images' : 'image'}</span>
+                <span className="text-white text-sm font-medium">
+                  View {images.length > 1 ? 'images' : 'image'}
+                </span>
               </div>
             </div>
           ) : (
@@ -80,55 +73,50 @@ export const CollectionItemComponent = ({
               <ImageIcon className="h-10 w-10 text-muted-foreground opacity-50" />
             </div>
           )}
-          
+
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-semibold line-clamp-2">{item.name}</h3>
                 <div className="flex items-center mt-1">
                   <span className="text-xs px-2 py-1 bg-secondary rounded-full">
-                    {categoryLabels[item.category] || item.category}
+                    {CATEGORIES[item.category] || item.category}
                   </span>
                   <span className="text-xs text-muted-foreground ml-2">
                     {new Date(item.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-0 h-8 w-8"
-                onClick={onExpand}
-              >
-                <ChevronDown 
+              <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={onExpand}>
+                <ChevronDown
                   className={cn(
-                    "h-4 w-4 transition-transform", 
-                    isExpanded ? "transform rotate-180" : ""
-                  )} 
+                    'h-4 w-4 transition-transform',
+                    isExpanded ? 'transform rotate-180' : ''
+                  )}
                 />
               </Button>
             </div>
           </CardHeader>
-          
-          <CardContent className={cn(
-            "transition-all duration-300 overflow-hidden",
-            isExpanded ? "max-h-96" : "max-h-0 p-0"
-          )}>
-            <p className="text-sm text-muted-foreground">
-              {item.description || "No description"}
-            </p>
-            
+
+          <CardContent
+            className={cn(
+              'transition-all duration-300 overflow-hidden',
+              isExpanded ? 'max-h-96' : 'max-h-0 p-0'
+            )}
+          >
+            <p className="text-sm text-muted-foreground">{item.description || 'No description'}</p>
+
             {images.length > 1 && (
               <div className="mt-3 flex overflow-x-auto gap-2 pb-2">
                 {images.map((image, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden cursor-pointer ring-offset-background transition-all hover:ring-2 hover:ring-ring hover:ring-offset-2"
                     onClick={() => openImageViewer(index)}
                   >
-                    <img 
-                      src={image} 
-                      alt={`${item.name} thumbnail ${index + 1}`} 
+                    <img
+                      src={image}
+                      alt={`${item.name} thumbnail ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -136,24 +124,14 @@ export const CollectionItemComponent = ({
               </div>
             )}
           </CardContent>
-          
+
           <CardFooter className="mt-auto pt-4">
             <div className="flex justify-end w-full gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8"
-                onClick={onEdit}
-              >
+              <Button variant="outline" size="sm" className="h-8" onClick={onEdit}>
                 <Pencil className="h-3.5 w-3.5 mr-1" />
                 Edit
               </Button>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                className="h-8"
-                onClick={onDelete}
-              >
+              <Button variant="destructive" size="sm" className="h-8" onClick={onDelete}>
                 <Trash className="h-3.5 w-3.5 mr-1" />
                 Delete
               </Button>
@@ -161,7 +139,7 @@ export const CollectionItemComponent = ({
           </CardFooter>
         </Card>
       </motion.div>
-      
+
       {hasImages && (
         <ImageViewer
           images={images}
@@ -172,4 +150,4 @@ export const CollectionItemComponent = ({
       )}
     </>
   );
-} 
+};

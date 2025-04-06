@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build && node scripts/copy-files.js",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write .",
+    "prepare": "husky",
+    "lint-staged": "lint-staged"
   },
   "dependencies": {
     "@hookform/resolvers": "5.0.1",
@@ -40,8 +44,23 @@
     "@types/react-dom": "19",
     "eslint": "9",
     "eslint-config-next": "15.2.4",
+    "eslint-import-resolver-typescript": "4.3.1",
+    "eslint-plugin-import": "2.31.0",
+    "eslint-plugin-simple-import-sort": "12.1.1",
+    "husky": "9.1.7",
+    "lint-staged": "15.5.0",
+    "prettier": "3.5.3",
     "tailwindcss": "4",
     "typescript": "5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

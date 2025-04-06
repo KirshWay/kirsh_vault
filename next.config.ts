@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
-import withPWA from "next-pwa";
+import type { NextConfig } from 'next';
+import withPWA from 'next-pwa';
 
-const basePath = process.env.NODE_ENV === "production" ? '/kirsh_vault' : '';
+const basePath = process.env.NODE_ENV === 'production' ? '/kirsh_vault' : '';
 
 const nextConfig: NextConfig = {
   output: 'export',
@@ -15,10 +15,10 @@ const nextConfig: NextConfig = {
 };
 
 const pwaConfig = withPWA({
-  dest: "public",
+  dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === "development",
+  disable: process.env.NODE_ENV === 'development',
   buildExcludes: [/middleware-manifest\.json$/],
   publicExcludes: ['!robots.txt', '!sitemap.xml'],
   scope: basePath || '/',

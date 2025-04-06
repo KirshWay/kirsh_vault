@@ -1,19 +1,20 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { CollectionItem } from "@/lib/db";
-import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-hot-toast";
-import { CollectionItemComponent } from "./CollectionItem";
-import { ItemForm } from "./ItemForm";
-import db from "@/lib/db";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import db, { CollectionItem } from '@/lib/db';
+
+import { CollectionItemComponent } from './CollectionItem';
+import { ItemForm } from './ItemForm';
 
 type Props = {
   items: CollectionItem[];
   onItemChanged: () => void;
   categoryFilter?: string;
-}
+};
 
 export const CollectionList = ({ items, onItemChanged, categoryFilter }: Props) => {
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
@@ -21,15 +22,15 @@ export const CollectionList = ({ items, onItemChanged, categoryFilter }: Props) 
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
-    
+    if (!confirm('Are you sure you want to delete this item?')) return;
+
     try {
       await db.deleteItem(id);
-      toast.success("Item deleted");
+      toast.success('Item deleted');
       onItemChanged();
     } catch (error) {
-      console.error("Error deleting item:", error);
-      toast.error("Error deleting item");
+      console.error('Error deleting item:', error);
+      toast.error('Error deleting item');
     }
   };
 
@@ -49,16 +50,16 @@ export const CollectionList = ({ items, onItemChanged, categoryFilter }: Props) 
     images?: string[];
   }) => {
     if (!editingItem || !editingItem.id) return;
-    
+
     try {
       await db.updateItem(editingItem.id, data);
-      toast.success("Item updated");
+      toast.success('Item updated');
       setIsFormOpen(false);
       setEditingItem(null);
       onItemChanged();
     } catch (error) {
-      console.error("Error updating item:", error);
-      toast.error("Error updating item");
+      console.error('Error updating item:', error);
+      toast.error('Error updating item');
     }
   };
 
@@ -68,7 +69,7 @@ export const CollectionList = ({ items, onItemChanged, categoryFilter }: Props) 
         <DialogContent>
           <DialogTitle>Edit Item</DialogTitle>
           {isFormOpen && editingItem && (
-            <ItemForm 
+            <ItemForm
               defaultValues={editingItem}
               onSubmit={handleUpdateItem}
               onCancel={() => setIsFormOpen(false)}
@@ -76,7 +77,7 @@ export const CollectionList = ({ items, onItemChanged, categoryFilter }: Props) 
           )}
         </DialogContent>
       </Dialog>
-      
+
       <AnimatePresence>
         {items.length > 0 ? (
           <motion.div
@@ -102,13 +103,11 @@ export const CollectionList = ({ items, onItemChanged, categoryFilter }: Props) 
             className="text-center py-8"
           >
             <p className="text-muted-foreground">
-              {categoryFilter
-                ? `No items in ${categoryFilter} category`
-                : "No items to display"}
+              {categoryFilter ? `No items in ${categoryFilter} category` : 'No items to display'}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
-} 
+};

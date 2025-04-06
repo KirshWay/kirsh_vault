@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -11,14 +12,9 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialIndex?: number;
-}
+};
 
-export function ImageViewer({
-  images,
-  open,
-  onOpenChange,
-  initialIndex = 0
-}: Props) {
+export function ImageViewer({ images, open, onOpenChange, initialIndex = 0 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   useEffect(() => {
@@ -110,10 +106,10 @@ export function ImageViewer({
                   <button
                     key={idx}
                     className={cn(
-                      "w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all",
+                      'w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all',
                       currentIndex === idx
-                        ? "border-primary"
-                        : "border-transparent opacity-60 hover:opacity-100"
+                        ? 'border-primary'
+                        : 'border-transparent opacity-60 hover:opacity-100'
                     )}
                     onClick={() => setCurrentIndex(idx)}
                   >
@@ -131,4 +127,4 @@ export function ImageViewer({
       </DialogContent>
     </Dialog>
   );
-} 
+}

@@ -1,12 +1,14 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Film, Package, Menu, X, Home } from "lucide-react";
+import { motion } from 'framer-motion';
+import { Home, Menu, X } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { CATEGORY_CONFIG } from '@/lib/config/categories';
+import { cn } from '@/lib/utils';
 
 export const NavMenu = () => {
   const pathname = usePathname();
@@ -14,27 +16,19 @@ export const NavMenu = () => {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
+  const categoryItems = Object.values(CATEGORY_CONFIG).map((config) => ({
+    title: config.pluralTitle,
+    href: config.route,
+    icon: <config.icon className="h-4 w-4 mr-2" />,
+  }));
+
   const menuItems = [
     {
-      title: "Home",
-      href: "/",
+      title: 'Home',
+      href: '/',
       icon: <Home className="h-4 w-4 mr-2" />,
     },
-    {
-      title: "Books",
-      href: "/books",
-      icon: <BookOpen className="h-4 w-4 mr-2" />,
-    },
-    {
-      title: "Movies",
-      href: "/cinema",
-      icon: <Film className="h-4 w-4 mr-2" />,
-    },
-    {
-      title: "Other",
-      href: "/other",
-      icon: <Package className="h-4 w-4 mr-2" />,
-    },
+    ...categoryItems,
   ];
 
   return (
@@ -44,7 +38,7 @@ export const NavMenu = () => {
           {menuItems.map((item) => (
             <Link key={item.href} href={item.href} passHref>
               <Button
-                variant={pathname === item.href ? "default" : "ghost"}
+                variant={pathname === item.href ? 'default' : 'ghost'}
                 className="relative h-full rounded-none px-4"
                 asChild
               >
@@ -55,7 +49,7 @@ export const NavMenu = () => {
                     <motion.div
                       className="absolute bottom-0 left-0 right-0 h-1 bg-primary"
                       layoutId="activeTab"
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
                   )}
                 </div>
@@ -76,18 +70,18 @@ export const NavMenu = () => {
 
         <motion.div
           className={cn(
-            "absolute w-full bg-background z-50 border-b shadow-lg",
-            !isOpen && "hidden"
+            'absolute w-full bg-background z-50 border-b shadow-lg',
+            !isOpen && 'hidden'
           )}
           initial={{ height: 0, opacity: 0 }}
-          animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
+          animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
           transition={{ duration: 0.2 }}
         >
           <div className="container py-4 flex flex-col space-y-1">
             {menuItems.map((item) => (
               <Link key={item.href} href={item.href} passHref>
                 <Button
-                  variant={pathname === item.href ? "default" : "ghost"}
+                  variant={pathname === item.href ? 'default' : 'ghost'}
                   className="w-full justify-start"
                   onClick={() => setIsOpen(false)}
                   asChild
@@ -104,4 +98,4 @@ export const NavMenu = () => {
       </div>
     </>
   );
-} 
+};

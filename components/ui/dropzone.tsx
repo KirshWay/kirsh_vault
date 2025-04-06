@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
+import { Image as ImageIcon, Upload, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
-import { useDropzone, FileRejection, Accept } from 'react-dropzone';
+import { Accept, FileRejection, useDropzone } from 'react-dropzone';
 import { toast } from 'react-hot-toast';
-import { X, Upload, Image as ImageIcon } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +15,7 @@ type Props = {
   maxSize?: number;
   accept?: Accept;
   className?: string;
-}
+};
 
 export function Dropzone({
   images = [],
@@ -34,7 +35,9 @@ export function Dropzone({
         fileRejections.forEach((file) => {
           file.errors.forEach((err) => {
             if (err.code === 'file-too-large') {
-              toast.error(`File ${file.file.name} is too large. Max size is ${maxSize / 1024 / 1024}MB`);
+              toast.error(
+                `File ${file.file.name} is too large. Max size is ${maxSize / 1024 / 1024}MB`
+              );
             }
             if (err.code === 'file-invalid-type') {
               toast.error(`File ${file.file.name} has an invalid file type`);
@@ -57,9 +60,11 @@ export function Dropzone({
           reader.onload = () => {
             if (reader.result) {
               newImages.push(reader.result.toString());
-              
-              if (newImages.length === images.length + acceptedFiles.length || 
-                  newImages.length === maxFiles) {
+
+              if (
+                newImages.length === images.length + acceptedFiles.length ||
+                newImages.length === maxFiles
+              ) {
                 onChange(newImages);
               }
             }
@@ -93,8 +98,8 @@ export function Dropzone({
           isDragActive
             ? 'border-primary/70 bg-primary/5'
             : isHovering
-            ? 'border-primary/50 bg-primary/5'
-            : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5'
+              ? 'border-primary/50 bg-primary/5'
+              : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/5'
         )}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
@@ -111,9 +116,7 @@ export function Dropzone({
             <p className="text-primary font-medium">Drop the files here...</p>
           ) : (
             <>
-              <p className="font-medium">
-                Drag & drop images here, or click to select
-              </p>
+              <p className="font-medium">Drag & drop images here, or click to select</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {`Supports JPEG, PNG, WebP • Max ${maxFiles} files • Max ${
                   maxSize / 1024 / 1024
@@ -131,11 +134,7 @@ export function Dropzone({
               key={index}
               className="group relative aspect-square rounded-md overflow-hidden border border-muted"
             >
-              <img
-                src={image}
-                alt={`Upload ${index + 1}`}
-                className="h-full w-full object-cover"
-              />
+              <img src={image} alt={`Upload ${index + 1}`} className="h-full w-full object-cover" />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Button
                   type="button"
@@ -152,7 +151,7 @@ export function Dropzone({
               </div>
             </div>
           ))}
-          
+
           {/* Add more button if under max files */}
           {images.length < maxFiles && (
             <div
@@ -170,4 +169,4 @@ export function Dropzone({
       )}
     </div>
   );
-} 
+}

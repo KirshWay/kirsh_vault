@@ -9,16 +9,16 @@ export type CollectionItem = {
   images?: string[];
   createdAt: Date;
   category: ItemCategory;
-}
+};
 
 class AppDatabase extends Dexie {
   items!: Table<CollectionItem>;
 
   constructor() {
     super('kirshVault');
-    
+
     this.version(1).stores({
-      items: '++id, name, createdAt, category'
+      items: '++id, name, createdAt, category',
     });
   }
 
@@ -41,7 +41,10 @@ class AppDatabase extends Dexie {
     });
   }
 
-  async updateItem(id: number, updates: Partial<Omit<CollectionItem, 'id' | 'createdAt'>>): Promise<void> {
+  async updateItem(
+    id: number,
+    updates: Partial<Omit<CollectionItem, 'id' | 'createdAt'>>
+  ): Promise<void> {
     await this.items.update(id, updates);
   }
 
@@ -56,4 +59,4 @@ class AppDatabase extends Dexie {
 
 export const db = new AppDatabase();
 
-export default db; 
+export default db;

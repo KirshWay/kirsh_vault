@@ -1,8 +1,9 @@
 'use client';
 
 import Link, { LinkProps } from 'next/link';
-import { createPath } from '@/lib/path-utils';
 import { ReactNode } from 'react';
+
+import { createPath } from '@/lib/path-utils';
 
 interface Props extends Omit<LinkProps, 'href'> {
   href: string;
@@ -11,13 +12,11 @@ interface Props extends Omit<LinkProps, 'href'> {
 }
 
 export const BaseLink = ({ href, children, className, ...rest }: Props) => {
-  const processedHref = href.startsWith('http') || href.startsWith('#') 
-    ? href
-    : createPath(href);
+  const processedHref = href.startsWith('http') || href.startsWith('#') ? href : createPath(href);
 
   return (
     <Link href={processedHref} className={className} {...rest}>
       {children}
     </Link>
   );
-} 
+};

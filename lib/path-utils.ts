@@ -16,7 +16,7 @@ export const createPath = (path: string): string => {
   if (path.startsWith(basePath + '/') || path === basePath) {
     return path;
   }
-  
+
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${basePath}${normalizedPath}`;
 };
@@ -25,6 +25,6 @@ export const createImagePath = (imagePath: string): string => {
   if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
     return imagePath;
   }
-  
+
   return createPath(imagePath);
-}; 
+};
