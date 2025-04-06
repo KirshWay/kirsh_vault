@@ -5,6 +5,7 @@ export type FormValues = {
   description?: string;
   category: ItemCategory;
   images?: string[];
+  rating?: number;
 };
 
 export type DefaultValues = Partial<{
@@ -12,4 +13,5 @@ export type DefaultValues = Partial<{
   description: string;
   category: ItemCategory;
   images: string[];
+  rating: number;
 }>;

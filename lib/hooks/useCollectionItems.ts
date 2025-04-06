@@ -47,6 +47,7 @@ export const useCollectionItems = () => {
                 description: data.description,
                 category: data.category,
                 images: data.images || [],
+                rating: data.rating,
               }
             : item
         )

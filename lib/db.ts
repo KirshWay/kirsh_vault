@@ -9,6 +9,7 @@ export type CollectionItem = {
   images?: string[];
   createdAt: Date;
   category: ItemCategory;
+  rating?: number;
 };
 
 class AppDatabase extends Dexie {

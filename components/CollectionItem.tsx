@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { ImageViewer } from '@/components/ui/image-viewer';
+import { StarRating } from '@/components/ui/StarRating';
 import { CATEGORIES } from '@/lib/constants';
 import { CollectionItem } from '@/lib/db';
 import { cn } from '@/lib/utils';
@@ -86,6 +87,11 @@ export const CollectionItemComponent = ({
                     {new Date(item.createdAt).toLocaleDateString()}
                   </span>
                 </div>
+                {item.rating !== undefined && item.rating > 0 && item.category !== 'other' && (
+                  <div className="mt-2">
+                    <StarRating value={item.rating} size="sm" readonly />
+                  </div>
+                )}
               </div>
               <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={onExpand}>
                 <ChevronDown

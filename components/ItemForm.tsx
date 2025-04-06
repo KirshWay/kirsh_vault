@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { StarRating } from '@/components/ui/StarRating';
 import { Textarea } from '@/components/ui/textarea';
 import { DefaultValues, FormValues } from '@/types';
 
@@ -31,6 +32,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   category: z.enum(['book', 'movie', 'other'], { required_error: 'Please select a category' }),
   images: z.array(z.string()).optional(),
+  rating: z.number().min(0).max(10).optional(),
 });
 
 type Props = {
@@ -41,6 +43,10 @@ type Props = {
 
 export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
   const [images, setImages] = useState<string[]>(defaultValues?.images || []);
+  const [rating, setRating] = useState<number>(defaultValues?.rating || 0);
+  const [currentCategory, setCurrentCategory] = useState<string>(
+    defaultValues?.category || 'other'
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -49,6 +55,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
       description: defaultValues?.description || '',
       category: defaultValues?.category || 'other',
       images: defaultValues?.images || [],
+      rating: defaultValues?.rating || 0,
     },
   });
 
@@ -56,14 +63,33 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
     form.setValue('images', images);
   }, [images, form]);
 
+  useEffect(() => {
+    form.setValue('rating', rating);
+  }, [rating, form]);
+
   const handleImagesChange = (newImages: string[]) => {
     setImages(newImages);
+  };
+
+  const handleRatingChange = (newRating: number) => {
+    setRating(newRating);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setCurrentCategory(category);
+    // Сбрасываем рейтинг, если категория "other"
+    if (category === 'other') {
+      setRating(0);
+    }
+    form.setValue('category', category as 'book' | 'movie' | 'other');
   };
 
   const handleSubmit = (data: FormValues) => {
     const formData = {
       ...data,
       images,
+      // Не отправляем рейтинг для категории "other"
+      rating: currentCategory === 'other' ? 0 : rating,
     };
 
     onSubmit(formData);
@@ -94,7 +120,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={handleCategoryChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
@@ -128,6 +154,22 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
                 </FormItem>
               )}
             />
+
+            {currentCategory !== 'other' && (
+              <FormField
+                control={form.control}
+                name="rating"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Rating</FormLabel>
+                    <FormControl>
+                      <StarRating value={rating} onChange={handleRatingChange} size="md" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
 
           <div className="md:col-span-1">
