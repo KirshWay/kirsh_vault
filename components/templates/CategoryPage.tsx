@@ -25,7 +25,7 @@ export function CategoryPage({ category }: Props) {
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null);
 
-  const { items, isLoading, loadItems, addItem, updateItem, deleteItem } =
+  const { items, pagination, isLoading, loadItems, addItem, updateItem, deleteItem, changePage } =
     useCategoryItems(category);
 
   const {
@@ -50,7 +50,6 @@ export function CategoryPage({ category }: Props) {
       await updateItem(editingItem.id, data);
       setIsDialogOpen(false);
       setEditingItem(null);
-      loadItems();
       return true;
     } catch (error) {
       console.error('Error updating item:', error);
@@ -60,7 +59,6 @@ export function CategoryPage({ category }: Props) {
 
   const handleDeleteItem = async (id: number) => {
     await deleteItem(id);
-    loadItems();
   };
 
   const handleExpandItem = (id: number) => {
@@ -81,7 +79,7 @@ export function CategoryPage({ category }: Props) {
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h2 className="text-xl font-semibold">
-          {config.pluralTitle} ({items.length})
+          {config.pluralTitle} ({pagination.total})
         </h2>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -133,6 +131,15 @@ export function CategoryPage({ category }: Props) {
           onItemEdit={handleEditClick}
           onItemExpand={handleExpandItem}
           expandedItemId={expandedItemId}
+          pagination={
+            isSearching
+              ? undefined
+              : {
+                  currentPage: pagination.page,
+                  totalPages: pagination.totalPages,
+                  onPageChange: changePage,
+                }
+          }
         />
       )}
     </div>

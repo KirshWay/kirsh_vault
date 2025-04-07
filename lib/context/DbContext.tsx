@@ -3,13 +3,19 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import db, { CollectionItem, ItemCategory } from '@/lib/db';
+import db, { CollectionItem, ItemCategory, PaginationResult } from '@/lib/db';
 import { FormValues } from '@/types';
 
 type DbContextType = {
   isLoading: boolean;
   getAllItems: () => Promise<CollectionItem[]>;
   getItemsByCategory: (category: ItemCategory) => Promise<CollectionItem[]>;
+  getItemsPage: (page: number, limit: number) => Promise<PaginationResult<CollectionItem>>;
+  getItemsByCategoryPage: (
+    category: ItemCategory,
+    page: number,
+    limit: number
+  ) => Promise<PaginationResult<CollectionItem>>;
   addItem: (item: Omit<CollectionItem, 'id' | 'createdAt'>) => Promise<number | boolean>;
   updateItem: (
     id: number,
@@ -55,6 +61,47 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
       console.error(`Error getting ${category} items:`, error);
       toast.error(`Failed to load ${category} items`);
       return [];
+    }
+  };
+
+  const getItemsPage = async (
+    page: number,
+    limit: number
+  ): Promise<PaginationResult<CollectionItem>> => {
+    try {
+      return await db.getItemsPage(page, limit);
+    } catch (error) {
+      console.error('Error getting items page:', error);
+      toast.error('Failed to load items');
+      return {
+        items: [],
+        total: 0,
+        page,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      };
+    }
+  };
+
+  const getItemsByCategoryPage = async (
+    category: ItemCategory,
+    page: number,
+    limit: number
+  ): Promise<PaginationResult<CollectionItem>> => {
+    try {
+      return await db.getItemsByCategoryPage(category, page, limit);
+    } catch (error) {
+      console.error(`Error getting ${category} items page:`, error);
+      toast.error(`Failed to load ${category} items`);
+      return {
+        items: [],
+        total: 0,
+        page,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      };
     }
   };
 
@@ -119,6 +166,8 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         getAllItems,
         getItemsByCategory,
+        getItemsPage,
+        getItemsByCategoryPage,
         addItem,
         updateItem,
         deleteItem,

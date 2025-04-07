@@ -12,6 +12,15 @@ export type CollectionItem = {
   rating?: number;
 };
 
+export type PaginationResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+};
+
 class AppDatabase extends Dexie {
   items!: Table<CollectionItem>;
 
@@ -32,6 +41,56 @@ class AppDatabase extends Dexie {
       .where('category')
       .equals(category)
       .sortBy('createdAt', (items) => items.reverse());
+  }
+
+  async getItemsPage(page: number, limit: number): Promise<PaginationResult<CollectionItem>> {
+    const offset = (page - 1) * limit;
+
+    const total = await this.items.count();
+    const totalPages = Math.ceil(total / limit);
+
+    const items = await this.items
+      .orderBy('createdAt')
+      .reverse()
+      .offset(offset)
+      .limit(limit)
+      .toArray();
+
+    return {
+      items,
+      total,
+      page,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
+  }
+
+  async getItemsByCategoryPage(
+    category: ItemCategory,
+    page: number,
+    limit: number
+  ): Promise<PaginationResult<CollectionItem>> {
+    const offset = (page - 1) * limit;
+
+    const total = await this.items.where('category').equals(category).count();
+    const totalPages = Math.ceil(total / limit);
+
+    const items = await this.items
+      .where('category')
+      .equals(category)
+      .sortBy('createdAt', (items) => {
+        return items.reverse().slice(offset, offset + limit);
+      });
+
+    return {
+      items,
+      total,
+      page,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
   }
 
   async addItem(item: Omit<CollectionItem, 'id' | 'createdAt'>): Promise<number> {

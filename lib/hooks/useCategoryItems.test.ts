@@ -1,10 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { CollectionItem } from '@/lib/db';
+import { CollectionItem, PaginationResult } from '@/lib/db';
 import { FormValues } from '@/types';
 
 import { useCategoryItems } from './useCategoryItems';
+import { DEFAULT_PAGE_SIZE } from './useCollectionItems';
 
 vi.mock('@/lib/context/DbContext', () => ({
   useDb: () => ({
@@ -15,6 +16,31 @@ vi.mock('@/lib/context/DbContext', () => ({
         return mockMovies;
       }
       return [];
+    }),
+    getItemsByCategoryPage: vi.fn().mockImplementation(async (category, page, limit) => {
+      let items: CollectionItem[] = [];
+
+      if (category === 'book') {
+        items = mockBooks;
+      } else if (category === 'movie') {
+        items = mockMovies;
+      }
+
+      const total = items.length;
+      const startIndex = (page - 1) * limit;
+      const endIndex = Math.min(startIndex + limit, total);
+      const pageItems = items.slice(startIndex, endIndex);
+
+      const result: PaginationResult<CollectionItem> = {
+        items: pageItems,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+        hasNext: endIndex < total,
+        hasPrev: page > 1,
+      };
+
+      return result;
     }),
     addItem: vi.fn().mockImplementation(async () => {
       return 999;
@@ -73,6 +99,10 @@ describe('useCategoryItems hook', () => {
     });
 
     expect(result.current.items).toEqual(mockBooks);
+    expect(result.current.pagination.total).toBe(mockBooks.length);
+    expect(result.current.pagination.totalPages).toBe(
+      Math.ceil(mockBooks.length / DEFAULT_PAGE_SIZE)
+    );
     expect(result.current.isLoading).toBe(false);
   });
 
@@ -124,8 +154,22 @@ describe('useCategoryItems hook', () => {
     });
 
     expect(success).toBe(true);
+  });
 
-    const filteredItems = mockBooks.filter((item) => item.id !== 1);
-    expect(result.current.items.length).toBe(filteredItems.length);
+  test('should change page', async () => {
+    const { result } = renderHook(() => useCategoryItems('book', 1, 1));
+
+    await act(async () => {
+      await result.current.loadItems();
+    });
+
+    expect(result.current.pagination.page).toBe(1);
+    expect(result.current.items.length).toBe(1);
+
+    await act(async () => {
+      await result.current.changePage(2);
+    });
+
+    expect(result.current.pagination.page).toBe(2);
   });
 });

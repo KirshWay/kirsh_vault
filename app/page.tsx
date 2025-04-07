@@ -16,8 +16,17 @@ import { useSearchItems } from '@/lib/hooks/useSearchItems';
 import { FormValues } from '@/types';
 
 export default function Home() {
-  const { items, isLoading, expandedItemId, addItem, updateItem, deleteItem, toggleExpandItem } =
-    useCollectionItems();
+  const {
+    items,
+    pagination,
+    isLoading,
+    expandedItemId,
+    addItem,
+    updateItem,
+    deleteItem,
+    toggleExpandItem,
+    changePage,
+  } = useCollectionItems();
 
   const {
     filteredItems,
@@ -116,6 +125,15 @@ export default function Home() {
           onItemEdit={handleEditClick}
           onItemExpand={toggleExpandItem}
           expandedItemId={expandedItemId}
+          pagination={
+            isSearching
+              ? undefined
+              : {
+                  currentPage: pagination.page,
+                  totalPages: pagination.totalPages,
+                  onPageChange: changePage,
+                }
+          }
         />
       )}
     </main>

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 import { CollectionItemComponent } from '@/components/CollectionItem';
 import { EmptyState } from '@/components/EmptyState';
+import { Pagination } from '@/components/ui/Pagination';
 import { CollectionItem } from '@/lib/db';
 
 type Props = {
@@ -16,6 +17,11 @@ type Props = {
   onItemEdit: (item: CollectionItem) => void;
   onItemExpand: (id: number) => void;
   expandedItemId: number | null;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
 };
 
 export const SearchResults = ({
@@ -28,6 +34,7 @@ export const SearchResults = ({
   onItemEdit,
   onItemExpand,
   expandedItemId,
+  pagination,
 }: Props) => {
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -84,6 +91,16 @@ export const SearchResults = ({
           ))}
         </AnimatePresence>
       </motion.div>
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className="mt-8 flex justify-center">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={pagination.onPageChange}
+          />
+        </div>
+      )}
     </>
   );
 };
