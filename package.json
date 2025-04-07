@@ -1,6 +1,6 @@
 {
   "name": "kirsh_vault",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -11,8 +11,8 @@
     "test:watch": "vitest",
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",
-    "prepare": "husky",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "prepare": "simple-git-hooks"
   },
   "dependencies": {
     "@hookform/resolvers": "5.0.1",
@@ -56,10 +56,10 @@
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-simple-import-sort": "12.1.1",
     "fake-indexeddb": "6.0.0",
-    "husky": "9.1.7",
     "jsdom": "26.0.0",
     "lint-staged": "15.5.0",
     "prettier": "3.5.3",
+    "simple-git-hooks": "2.12.1",
     "tailwindcss": "4",
     "typescript": "5",
     "vitest": "3.1.1"
@@ -72,6 +72,10 @@
     "*.{json,css,md}": [
       "prettier --write"
     ]
+  },
+  "simple-git-hooks": {
+    "pre-push": "bun run test",
+    "pre-commit": "bun run lint-staged"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
