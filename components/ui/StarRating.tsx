@@ -49,7 +49,7 @@ export function StarRating({
   const activeValue = hoverValue !== null ? hoverValue : value;
 
   return (
-    <div className={cn('flex items-center', className)}>
+    <div className={cn('flex items-center', className)} data-testid="star-rating">
       <div className={cn('flex items-center', containerSizes[size])}>
         {[...Array(starsToShow)].map((_, index) => {
           const starValue = index + 1;

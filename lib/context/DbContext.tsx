@@ -65,6 +65,7 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
         description: item.description,
         category: item.category,
         images: item.images || [],
+        rating: item.rating,
       });
       toast.success('Item added successfully');
       return newItemId;

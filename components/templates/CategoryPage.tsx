@@ -87,7 +87,7 @@ export function CategoryPage({ category }: Props) {
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
           <SearchBar
             onSearch={setSearchQuery}
-            placeholder={`Поиск ${config.pluralTitle.toLowerCase()}...`}
+            placeholder={`Search ${config.pluralTitle.toLowerCase()}...`}
             className="w-full sm:w-auto"
           />
 

@@ -52,8 +52,11 @@ export function ImageViewer({ images, open, onOpenChange, initialIndex = 0 }: Pr
   if (!images.length) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-black/95">
+    <Dialog open={open} onOpenChange={onOpenChange} modal>
+      <DialogContent
+        className="max-w-4xl w-full h-[80vh] p-0 gap-0 bg-background/90 backdrop-blur-sm shadow-2xl"
+        data-testid="image-viewer"
+      >
         <DialogTitle className="sr-only">Image Viewer</DialogTitle>
         <div className="w-full h-full flex flex-col">
           <div className="flex justify-between items-center p-2 text-white">

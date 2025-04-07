@@ -71,7 +71,10 @@ export const CollectionItemComponent = ({
             </div>
           ) : (
             <div className="w-full h-40 bg-muted flex items-center justify-center">
-              <ImageIcon className="h-10 w-10 text-muted-foreground opacity-50" />
+              <ImageIcon
+                className="h-10 w-10 text-muted-foreground opacity-50"
+                data-testid="image-icon"
+              />
             </div>
           )}
 
