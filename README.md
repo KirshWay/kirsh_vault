@@ -1,13 +1,12 @@
 # Kirsh Vault
 
-A Progressive Web App (PWA) collection management system with offline storage capabilities, built with modern web technologies.
+A collection management system with offline storage capabilities, built with modern web technologies.
 
 🚀 **Live Demo**: [Application](https://kirshway.github.io/kirsh_vault/)
 
 ## Features
 
 - **Offline Support**: Store your collection items locally using IndexedDB
-- **PWA Ready**: Install on your device as a native-like app
 - **Responsive Design**: Works on mobile, tablet, and desktop
 - **Animations**: Smooth transitions and interactions
 - **Modern UI**: Clean and intuitive interface
@@ -100,12 +99,8 @@ bun run start
   - `/context` - React context providers
   - `/hooks` - Custom React hooks for data and UI logic
   - `/db` - Database configuration and operations
-- `/public` - Static assets including PWA icons and manifest
+- `/public` - Static assets
 - `/types` - TypeScript type definitions
-
-## PWA Features
-
-The application works offline and can be installed on your device. It uses a service worker to cache assets and API responses, allowing for a seamless offline experience.
 
 ## Performance Optimizations
 
