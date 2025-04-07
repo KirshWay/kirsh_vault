@@ -24,8 +24,8 @@ export const EmptyState = ({ onAddClick, message }: Props) => {
           : ''}
       </p>
       {onAddClick && (
-        <Button onClick={onAddClick}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button className="cursor-pointer" onClick={onAddClick}>
+          <Plus className="h-4 w-4" />
           Add First Item
         </Button>
       )}

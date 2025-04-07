@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 
 import { CollectionItemComponent } from '@/components/CollectionItem';
 import { EmptyState } from '@/components/EmptyState';

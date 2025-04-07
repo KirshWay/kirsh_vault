@@ -3,6 +3,7 @@
 import { PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import { EmptyState } from '@/components/EmptyState';
 import { SearchResults } from '@/components/SearchResults';
 import { Button } from '@/components/ui/button';
 import { FilterPanel } from '@/components/ui/FilterPanel';
@@ -25,7 +26,7 @@ export function CategoryPage({ category }: Props) {
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null);
 
-  const { items, pagination, isLoading, loadItems, addItem, updateItem, deleteItem, changePage } =
+  const { items, pagination, isLoading, addItem, updateItem, deleteItem, changePage } =
     useCategoryItems(category);
 
   const {
@@ -70,6 +71,21 @@ export function CategoryPage({ category }: Props) {
     setIsDialogOpen(true);
   };
 
+  const handleOpenModal = () => {
+    setEditingItem(null);
+    setIsDialogOpen(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl">
+        <LoadingSpinner message={`Loading ${config.pluralTitle.toLowerCase()}...`} />
+      </div>
+    );
+  }
+
+  const hasItems = items.length > 0;
+
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <header className="mb-8">
@@ -89,26 +105,28 @@ export function CategoryPage({ category }: Props) {
             className="w-full sm:w-auto"
           />
 
-          <ItemFormModal
-            isOpen={isDialogOpen}
-            onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) setEditingItem(null);
-            }}
-            onSubmit={editingItem ? handleUpdateItem : handleAddItem}
-            title={editingItem ? `Edit ${config.title}` : `Add ${config.title}`}
-            defaultValues={editingItem ?? { category }}
-            trigger={
-              <Button onClick={() => setEditingItem(null)}>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add {config.title}
-              </Button>
-            }
-          />
+          {hasItems && (
+            <ItemFormModal
+              isOpen={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) setEditingItem(null);
+              }}
+              onSubmit={editingItem ? handleUpdateItem : handleAddItem}
+              title={editingItem ? `Edit ${config.title}` : `Add ${config.title}`}
+              defaultValues={editingItem ?? { category }}
+              trigger={
+                <Button onClick={() => setEditingItem(null)}>
+                  <PlusIcon className="h-4 w-4" />
+                  Add {config.title}
+                </Button>
+              }
+            />
+          )}
         </div>
       </div>
 
-      {items.length > 0 && (
+      {hasItems && (
         <div className="mb-4">
           <FilterPanel
             category={category}
@@ -118,9 +136,7 @@ export function CategoryPage({ category }: Props) {
         </div>
       )}
 
-      {isLoading ? (
-        <LoadingSpinner message={`Loading ${config.pluralTitle.toLowerCase()}...`} />
-      ) : (
+      {hasItems ? (
         <SearchResults
           items={filteredItems}
           isSearching={isSearching}
@@ -140,6 +156,24 @@ export function CategoryPage({ category }: Props) {
                   onPageChange: changePage,
                 }
           }
+        />
+      ) : (
+        <EmptyState
+          onAddClick={handleOpenModal}
+          message={`Your ${config.title.toLowerCase()} collection is empty`}
+        />
+      )}
+
+      {!hasItems && (
+        <ItemFormModal
+          isOpen={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setEditingItem(null);
+          }}
+          onSubmit={handleAddItem}
+          title={`Add First ${config.title}`}
+          defaultValues={{ category }}
         />
       )}
     </div>

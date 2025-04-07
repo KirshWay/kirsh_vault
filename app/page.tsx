@@ -58,6 +58,11 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
+  const handleOpenModal = () => {
+    setEditingItem(null);
+    setIsModalOpen(true);
+  };
+
   if (isLoading) {
     return (
       <main className="container mx-auto p-4 max-w-5xl">
@@ -65,6 +70,8 @@ export default function Home() {
       </main>
     );
   }
+
+  const hasItems = items.length > 0;
 
   return (
     <main className="container mx-auto p-4 max-w-5xl">
@@ -78,29 +85,31 @@ export default function Home() {
             className="w-full sm:w-auto"
           />
 
-          <ItemFormModal
-            isOpen={isModalOpen}
-            onOpenChange={(open) => {
-              setIsModalOpen(open);
-              if (!open) setEditingItem(null);
-            }}
-            onSubmit={editingItem ? handleUpdateItem : handleAddItem}
-            title={editingItem ? 'Edit Item' : 'Add New Item'}
-            defaultValues={editingItem ?? undefined}
-            trigger={
-              <Button
-                onClick={() => setEditingItem(null)}
-                className="w-full sm:w-auto cursor-pointer"
-              >
-                <Plus className="h-4 w-4" />
-                Add Item
-              </Button>
-            }
-          />
+          {hasItems && (
+            <ItemFormModal
+              isOpen={isModalOpen}
+              onOpenChange={(open) => {
+                setIsModalOpen(open);
+                if (!open) setEditingItem(null);
+              }}
+              onSubmit={editingItem ? handleUpdateItem : handleAddItem}
+              title={editingItem ? 'Edit Item' : 'Add New Item'}
+              defaultValues={editingItem ?? undefined}
+              trigger={
+                <Button
+                  onClick={() => setEditingItem(null)}
+                  className="w-full sm:w-auto cursor-pointer"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Item
+                </Button>
+              }
+            />
+          )}
         </div>
       </div>
 
-      {items.length > 0 && (
+      {hasItems && (
         <div className="mb-4">
           <FilterPanel
             ratingFilter={ratingFilter}
@@ -112,8 +121,8 @@ export default function Home() {
         </div>
       )}
 
-      {items.length === 0 ? (
-        <EmptyState onAddClick={() => setIsModalOpen(true)} />
+      {!hasItems ? (
+        <EmptyState onAddClick={handleOpenModal} />
       ) : (
         <SearchResults
           items={filteredItems}
@@ -134,6 +143,19 @@ export default function Home() {
                   onPageChange: changePage,
                 }
           }
+        />
+      )}
+
+      {!hasItems && (
+        <ItemFormModal
+          isOpen={isModalOpen}
+          onOpenChange={(open) => {
+            setIsModalOpen(open);
+            if (!open) setEditingItem(null);
+          }}
+          onSubmit={handleAddItem}
+          title="Add First Item"
+          defaultValues={undefined}
         />
       )}
     </main>

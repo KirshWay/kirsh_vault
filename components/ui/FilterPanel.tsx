@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Book, Bookmark, BookOpenCheck, Check, Filter, Star, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
