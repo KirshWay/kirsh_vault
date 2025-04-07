@@ -6,6 +6,7 @@ A collection management system with offline storage capabilities, built with mod
 
 ## Features
 
+- **Progressive Web App (PWA)**: Install on any device and use offline
 - **Offline Support**: Store your collection items locally using IndexedDB
 - **Responsive Design**: Works on mobile, tablet, and desktop
 - **Animations**: Smooth transitions and interactions
@@ -25,6 +26,7 @@ A collection management system with offline storage capabilities, built with mod
 - **Animations**: [Motion](https://motion.dev/)
 - **Forms**: [React Hook Form](https://react-hook-form.com/)
 - **Notifications**: [React Hot Toast](https://react-hot-toast.com/)
+- **PWA**: Service Worker, Web App Manifest
 - **Testing**: [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/)
 - **Runtime**: [Bun](https://bun.sh/) for fast development and testing
 
@@ -89,6 +91,16 @@ bun run start
 - Expand items to see full details
 - Quick edit and delete functionality
 
+### Progressive Web App
+
+- **Install on Any Device**: Works on Android, iOS, Windows, and macOS
+- **Full Offline Support**: All application features work without internet
+- **Caching**: Key resources are cached for improved performance
+- **Installation Guides**:
+  - **Android**: Tap menu (⋮) > "Install app"
+  - **iOS**: Tap share button (⎋) > "Add to Home Screen"
+  - **Desktop**: Click install icon in address bar
+
 ## Project Structure
 
 - `/app` - Next.js app router components and pages
@@ -99,7 +111,7 @@ bun run start
   - `/context` - React context providers
   - `/hooks` - Custom React hooks for data and UI logic
   - `/db` - Database configuration and operations
-- `/public` - Static assets
+- `/public` - Static assets and PWA files (manifest, icons, service worker)
 - `/types` - TypeScript type definitions
 
 ## Performance Optimizations
@@ -108,6 +120,7 @@ bun run start
 - Optimized IndexedDB queries for faster data retrieval
 - Lazy loading of components to reduce initial load time
 - Debounced search to prevent excessive database queries
+- Service Worker caching for faster app loading and offline support
 
 ## Deployment
 
