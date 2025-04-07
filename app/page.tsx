@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import { SearchResults } from '@/components/SearchResults';
 import { Button } from '@/components/ui/button';
+import { FilterPanel } from '@/components/ui/FilterPanel';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ItemFormModal } from '@/components/ui/modal/ItemFormModal';
 import { SearchBar } from '@/components/ui/SearchBar';
@@ -18,8 +19,16 @@ export default function Home() {
   const { items, isLoading, expandedItemId, addItem, updateItem, deleteItem, toggleExpandItem } =
     useCollectionItems();
 
-  const { filteredItems, setSearchQuery, isSearching, searchQuery, resultsCount, totalCount } =
-    useSearchItems(items);
+  const {
+    filteredItems,
+    setSearchQuery,
+    isSearching,
+    searchQuery,
+    resultsCount,
+    totalCount,
+    ratingFilter,
+    setRatingFilter,
+  } = useSearchItems(items);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null);
@@ -69,8 +78,8 @@ export default function Home() {
             defaultValues={editingItem ?? undefined}
             trigger={
               <Button
-                className="w-full sm:w-auto cursor-pointer"
                 onClick={() => setEditingItem(null)}
+                className="w-full sm:w-auto cursor-pointer"
               >
                 <Plus className="h-4 w-4" />
                 Add Item
@@ -79,6 +88,12 @@ export default function Home() {
           />
         </div>
       </div>
+
+      {items.length > 0 && (
+        <div className="mb-4">
+          <FilterPanel ratingFilter={ratingFilter} onRatingFilterChange={setRatingFilter} />
+        </div>
+      )}
 
       {items.length === 0 ? (
         <EmptyState onAddClick={() => setIsModalOpen(true)} />

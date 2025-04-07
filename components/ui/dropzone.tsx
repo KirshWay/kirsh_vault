@@ -152,7 +152,6 @@ export function Dropzone({
             </div>
           ))}
 
-          {/* Add more button if under max files */}
           {images.length < maxFiles && (
             <div
               {...getRootProps()}

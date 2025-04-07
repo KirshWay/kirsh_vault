@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { SearchResults } from '@/components/SearchResults';
 import { Button } from '@/components/ui/button';
+import { FilterPanel } from '@/components/ui/FilterPanel';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ItemFormModal } from '@/components/ui/modal/ItemFormModal';
 import { SearchBar } from '@/components/ui/SearchBar';
@@ -27,8 +28,16 @@ export function CategoryPage({ category }: Props) {
   const { items, isLoading, loadItems, addItem, updateItem, deleteItem } =
     useCategoryItems(category);
 
-  const { filteredItems, setSearchQuery, isSearching, searchQuery, resultsCount, totalCount } =
-    useSearchItems(items);
+  const {
+    filteredItems,
+    setSearchQuery,
+    isSearching,
+    searchQuery,
+    resultsCount,
+    totalCount,
+    ratingFilter,
+    setRatingFilter,
+  } = useSearchItems(items);
 
   const handleAddItem = async (data: FormValues) => {
     return await addItem(data);
@@ -100,6 +109,16 @@ export function CategoryPage({ category }: Props) {
           />
         </div>
       </div>
+
+      {items.length > 0 && (
+        <div className="mb-4">
+          <FilterPanel
+            category={category}
+            ratingFilter={ratingFilter}
+            onRatingFilterChange={setRatingFilter}
+          />
+        </div>
+      )}
 
       {isLoading ? (
         <LoadingSpinner message={`Loading ${config.pluralTitle.toLowerCase()}...`} />
