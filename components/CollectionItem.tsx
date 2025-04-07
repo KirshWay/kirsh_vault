@@ -118,7 +118,7 @@ export const CollectionItemComponent = ({
             <p className="text-sm text-muted-foreground">{item.description || 'No description'}</p>
 
             {images.length > 1 && (
-              <div className="mt-3 flex overflow-x-auto gap-2 pb-2">
+              <div className="mt-3 flex gap-2 pb-2">
                 {images.map((image, index) => (
                   <div
                     key={index}

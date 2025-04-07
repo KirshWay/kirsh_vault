@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import { CollectionItem } from '@/lib/db';
+import { CollectionItem, ItemCategory } from '@/lib/db';
 
 export type RatingFilter = {
   type: 'min' | 'max' | 'exact' | 'range' | 'preset';
@@ -11,6 +11,8 @@ export type RatingFilter = {
   exactValue?: number;
   presetName?: 'high' | 'medium' | 'low';
 };
+
+export type CategoryFilterType = ItemCategory | null;
 
 export type SearchOptions = {
   searchFields?: Array<keyof CollectionItem>;
@@ -21,11 +23,16 @@ export type SearchOptions = {
 export function useSearchItems(items: CollectionItem[], options: SearchOptions = {}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilterType>(null);
 
   const { searchFields = ['name', 'description'], minScore = 0.3, limitResults = 50 } = options;
 
   const filteredItems = useMemo(() => {
     let results = [...items];
+
+    if (categoryFilter) {
+      results = results.filter((item) => item.category === categoryFilter);
+    }
 
     if (ratingFilter) {
       results = results.filter((item) => {
@@ -99,16 +106,18 @@ export function useSearchItems(items: CollectionItem[], options: SearchOptions =
       .sort((a, b) => b.score - a.score)
       .slice(0, limitResults)
       .map((result) => result.item);
-  }, [items, searchQuery, ratingFilter, searchFields, minScore, limitResults]);
+  }, [items, searchQuery, ratingFilter, categoryFilter, searchFields, minScore, limitResults]);
 
   return {
     searchQuery,
     setSearchQuery,
     ratingFilter,
     setRatingFilter,
+    categoryFilter,
+    setCategoryFilter,
     filteredItems,
     isSearching: searchQuery.trim().length > 0,
-    isFiltering: ratingFilter !== null,
+    isFiltering: ratingFilter !== null || categoryFilter !== null,
     resultsCount: filteredItems.length,
     totalCount: items.length,
   };

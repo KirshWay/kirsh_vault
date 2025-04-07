@@ -76,7 +76,7 @@ export function SearchBar({
           <Button
             variant="ghost"
             size="sm"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 cursor-pointer"
             onClick={handleClear}
             type="button"
           >

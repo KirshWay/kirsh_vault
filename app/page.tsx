@@ -28,6 +28,8 @@ export default function Home() {
     totalCount,
     ratingFilter,
     setRatingFilter,
+    categoryFilter,
+    setCategoryFilter,
   } = useSearchItems(items);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,7 +93,13 @@ export default function Home() {
 
       {items.length > 0 && (
         <div className="mb-4">
-          <FilterPanel ratingFilter={ratingFilter} onRatingFilterChange={setRatingFilter} />
+          <FilterPanel
+            ratingFilter={ratingFilter}
+            onRatingFilterChange={setRatingFilter}
+            showCategoryFilter={true}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+          />
         </div>
       )}
 

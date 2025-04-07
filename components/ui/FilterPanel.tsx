@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Check, Filter, Star, X } from 'lucide-react';
+import { Book, Bookmark, BookOpenCheck, Check, Filter, Star, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -21,14 +21,18 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { CATEGORIES } from '@/lib/constants';
 import { ItemCategory } from '@/lib/db';
-import { RatingFilter } from '@/lib/hooks/useSearchItems';
+import { CategoryFilterType, RatingFilter } from '@/lib/hooks/useSearchItems';
 import { cn } from '@/lib/utils';
 
 type FilterPanelProps = {
   category?: ItemCategory;
   ratingFilter: RatingFilter | null;
   onRatingFilterChange: (filter: RatingFilter | null) => void;
+  showCategoryFilter?: boolean;
+  categoryFilter?: CategoryFilterType;
+  onCategoryFilterChange?: (category: CategoryFilterType) => void;
   className?: string;
 };
 
@@ -36,18 +40,24 @@ export function FilterPanel({
   category,
   ratingFilter,
   onRatingFilterChange,
+  showCategoryFilter = false,
+  categoryFilter = null,
+  onCategoryFilterChange,
   className,
 }: FilterPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const showRatingFilter = category !== 'other';
 
-  if (!showRatingFilter) {
+  if (!showRatingFilter && !showCategoryFilter) {
     return null;
   }
 
   const handleClearFilters = () => {
     onRatingFilterChange(null);
+    if (onCategoryFilterChange) {
+      onCategoryFilterChange(null);
+    }
   };
 
   const getRatingFilterLabel = (): string => {
@@ -78,6 +88,8 @@ export function FilterPanel({
     }
   };
 
+  const hasActiveFilters = ratingFilter !== null || categoryFilter !== null;
+
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -87,19 +99,21 @@ export function FilterPanel({
             size="sm"
             className={cn(
               'gap-1.5 text-sm group cursor-pointer',
-              ratingFilter ? 'bg-primary/5 border-primary/20' : ''
+              hasActiveFilters ? 'bg-primary/5 border-primary/20' : ''
             )}
           >
             <Filter
               className={cn(
                 'h-4 w-4 transition-colors',
-                ratingFilter ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+                hasActiveFilters
+                  ? 'text-primary'
+                  : 'text-muted-foreground group-hover:text-foreground'
               )}
             />
             Filters
-            {ratingFilter && (
+            {hasActiveFilters && (
               <Badge variant="secondary" className="ml-1 rounded-sm px-1 py-0 h-5">
-                1
+                {(ratingFilter ? 1 : 0) + (categoryFilter ? 1 : 0)}
               </Badge>
             )}
           </Button>
@@ -107,6 +121,74 @@ export function FilterPanel({
         <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuLabel>Filters</DropdownMenuLabel>
           <DropdownMenuSeparator />
+
+          {showCategoryFilter && onCategoryFilterChange && (
+            <DropdownMenuGroup>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Bookmark className="mr-2 h-4 w-4 text-blue-500" />
+                  <span className="cursor-pointer">Category</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                      onClick={() => onCategoryFilterChange(null)}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          categoryFilter === null ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      <span>All categories</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      onClick={() => onCategoryFilterChange('book')}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          categoryFilter === 'book' ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      <span>Books</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => onCategoryFilterChange('movie')}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          categoryFilter === 'movie' ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      <span>Movies</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => onCategoryFilterChange('other')}
+                      className="cursor-pointer"
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          categoryFilter === 'other' ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      <span>Other</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+            </DropdownMenuGroup>
+          )}
 
           {showRatingFilter && (
             <DropdownMenuGroup>
@@ -123,16 +205,6 @@ export function FilterPanel({
                         if (value === '') onRatingFilterChange(null);
                       }}
                     >
-                      {/* <DropdownMenuRadioItem value="">
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            ratingFilter === null ? 'opacity-100' : 'opacity-0'
-                          )}
-                        />
-                        <span className="cursor-pointer">Any rating</span>
-                      </DropdownMenuRadioItem> */}
-
                       <DropdownMenuItem
                         onClick={() => onRatingFilterChange(null)}
                         className="cursor-pointer"
@@ -222,31 +294,70 @@ export function FilterPanel({
               </DropdownMenuSub>
             </DropdownMenuGroup>
           )}
+
+          {hasActiveFilters && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleClearFilters}>
+                <X className="mr-2 h-4 w-4" />
+                <span className="cursor-pointer">Clear all filters</span>
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {ratingFilter && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="flex gap-2"
-        >
-          <Badge variant="secondary" className="flex items-center gap-1.5 h-8 px-3 cursor-default">
-            <Star className="h-3.5 w-3.5 text-yellow-500" />
-            {getRatingFilterLabel()}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-5 w-5 p-0 ml-1 rounded-full"
-              onClick={handleClearFilters}
+      <div className="flex flex-wrap gap-2">
+        {categoryFilter && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+          >
+            <Badge
+              variant="secondary"
+              className="flex items-center gap-1.5 h-8 px-3 cursor-default"
             >
-              <X className="h-3 w-3" />
-              <span className="sr-only">Clear filter</span>
-            </Button>
-          </Badge>
-        </motion.div>
-      )}
+              <Bookmark className="h-3.5 w-3.5 text-blue-500" />
+              {CATEGORIES[categoryFilter] || categoryFilter}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0 ml-1 rounded-full cursor-pointer"
+                onClick={() => onCategoryFilterChange && onCategoryFilterChange(null)}
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Clear filter</span>
+              </Button>
+            </Badge>
+          </motion.div>
+        )}
+
+        {ratingFilter && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+          >
+            <Badge
+              variant="secondary"
+              className="flex items-center gap-1.5 h-8 px-3 cursor-default"
+            >
+              <Star className="h-3.5 w-3.5 text-yellow-500" />
+              {getRatingFilterLabel()}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 w-5 p-0 ml-1 rounded-full"
+                onClick={() => onRatingFilterChange(null)}
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Clear filter</span>
+              </Button>
+            </Badge>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }

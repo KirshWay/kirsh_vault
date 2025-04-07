@@ -61,7 +61,7 @@ export const SearchResults = ({
           animate={{ opacity: 1, y: 0 }}
           className="mb-4 text-sm text-muted-foreground"
         >
-          Найдено: {resultsCount} из {totalCount}
+          Found: {resultsCount} of {totalCount}
         </motion.div>
       )}
 
