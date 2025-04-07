@@ -28,7 +28,6 @@ export function StarRating({
 
   const handleStarClick = (newValue: number) => {
     if (readonly) return;
-    // Если кликаем на текущую звезду, сбрасываем рейтинг
     const updatedValue = value === newValue ? 0 : newValue;
     onChange?.(updatedValue);
   };
@@ -45,10 +44,8 @@ export function StarRating({
     lg: 'gap-1.5',
   };
 
-  // Отображаем все 10 звезд
   const starsToShow = maxValue;
 
-  // Определяем активное значение (с учетом ховера)
   const activeValue = hoverValue !== null ? hoverValue : value;
 
   return (

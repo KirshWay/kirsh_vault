@@ -31,10 +31,29 @@ export const useCategoryItems = (category: ItemCategory) => {
     return false;
   };
 
+  const updateItem = async (id: number, data: FormValues) => {
+    const updates = {
+      ...data,
+      category,
+    };
+
+    await db.updateItem(id, updates);
+    await loadItems();
+    return true;
+  };
+
+  const deleteItem = async (id: number) => {
+    await db.deleteItem(id);
+    setItems((prev) => prev.filter((item) => item.id !== id));
+    return true;
+  };
+
   return {
     items,
     isLoading: db.isLoading,
     loadItems,
     addItem,
+    updateItem,
+    deleteItem,
   };
 };

@@ -77,10 +77,11 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
 
   const handleCategoryChange = (category: string) => {
     setCurrentCategory(category);
-    // Сбрасываем рейтинг, если категория "other"
+
     if (category === 'other') {
       setRating(0);
     }
+
     form.setValue('category', category as 'book' | 'movie' | 'other');
   };
 
@@ -88,7 +89,6 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
     const formData = {
       ...data,
       images,
-      // Не отправляем рейтинг для категории "other"
       rating: currentCategory === 'other' ? 0 : rating,
     };
 
@@ -192,10 +192,12 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
         </div>
 
         <div className="flex justify-end space-x-2 pt-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" className="cursor-pointer" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit">{defaultValues?.name ? 'Update' : 'Add'} Item</Button>
+          <Button type="submit" className="cursor-pointer">
+            {defaultValues?.name ? 'Update' : 'Add'} Item
+          </Button>
         </div>
       </form>
     </Form>

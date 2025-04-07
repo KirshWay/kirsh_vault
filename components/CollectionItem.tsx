@@ -93,7 +93,12 @@ export const CollectionItemComponent = ({
                   </div>
                 )}
               </div>
-              <Button variant="ghost" size="sm" className="p-0 h-8 w-8" onClick={onExpand}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="p-0 h-8 w-8 cursor-pointer"
+                onClick={onExpand}
+              >
                 <ChevronDown
                   className={cn(
                     'h-4 w-4 transition-transform',
@@ -133,11 +138,16 @@ export const CollectionItemComponent = ({
 
           <CardFooter className="mt-auto pt-4">
             <div className="flex justify-end w-full gap-2">
-              <Button variant="outline" size="sm" className="h-8" onClick={onEdit}>
+              <Button variant="outline" size="sm" className="h-8 cursor-pointer" onClick={onEdit}>
                 <Pencil className="h-3.5 w-3.5 mr-1" />
                 Edit
               </Button>
-              <Button variant="destructive" size="sm" className="h-8" onClick={onDelete}>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 cursor-pointer"
+                onClick={onDelete}
+              >
                 <Trash className="h-3.5 w-3.5 mr-1" />
                 Delete
               </Button>

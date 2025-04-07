@@ -36,7 +36,7 @@ export function ItemFormModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent containerClassName="max-w-3xl w-full">
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle className="mb-4">{title}</DialogTitle>
         <ItemForm defaultValues={defaultValues} onSubmit={handleSubmit} onCancel={handleCancel} />
       </DialogContent>
     </Dialog>
