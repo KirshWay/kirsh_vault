@@ -3,45 +3,43 @@ const fs = require('fs');
 // eslint-disable-next-line
 const path = require('path');
 
-const iconsDir = path.join(__dirname, '../out/icons');
+const sourceDir = path.join(__dirname, '../public');
+const targetDir = path.join(__dirname, '../out');
 
-if (!fs.existsSync(iconsDir)) {
-  fs.mkdirSync(iconsDir, { recursive: true });
-}
+function copyFilesRecursively(source, target) {
+  if (!fs.existsSync(target)) {
+    fs.mkdirSync(target, { recursive: true });
+  }
 
-fs.writeFileSync(path.join(__dirname, '../out/.nojekyll'), '');
+  const files = fs.readdirSync(source);
 
-if (fs.existsSync(path.join(__dirname, '../public/404.html'))) {
-  fs.copyFileSync(
-    path.join(__dirname, '../public/404.html'),
-    path.join(__dirname, '../out/404.html')
-  );
-  console.log('✅ Copy 404.html completed');
-}
+  files.forEach((file) => {
+    const sourcePath = path.join(source, file);
+    const targetPath = path.join(target, file);
 
-const copyIconsIfExists = (sourceDir, targetDir, filenames) => {
-  filenames.forEach((filename) => {
-    const sourcePath = path.join(sourceDir, filename);
-    const targetPath = path.join(targetDir, filename);
+    const stat = fs.statSync(sourcePath);
 
-    if (fs.existsSync(sourcePath)) {
-      const targetDirname = path.dirname(targetPath);
-      if (!fs.existsSync(targetDirname)) {
-        fs.mkdirSync(targetDirname, { recursive: true });
-      }
-
+    if (stat.isFile()) {
       fs.copyFileSync(sourcePath, targetPath);
-      console.log(`✅ Copy ${filename} completed`);
-    } else {
-      console.log(`⚠️ File ${filename} not found in source directory`);
+      console.log(`Copied: ${sourcePath} -> ${targetPath}`);
+    } else if (stat.isDirectory()) {
+      copyFilesRecursively(sourcePath, targetPath);
     }
   });
-};
+}
 
-const rootIconFiles = ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png'];
+copyFilesRecursively(sourceDir, targetDir);
 
-copyIconsIfExists(path.join(__dirname, '../public'), path.join(__dirname, '../out'), [
-  ...rootIconFiles,
-]);
+const serviceWorkerSource = path.join(sourceDir, 'service-worker.js');
+const serviceWorkerTarget = path.join(targetDir, 'service-worker.js');
 
-console.log('✅ Copy files for GitHub Pages completed');
+fs.copyFileSync(serviceWorkerSource, serviceWorkerTarget);
+console.log(`Copied Service Worker: ${serviceWorkerSource} -> ${serviceWorkerTarget}`);
+
+const nojekyllSource = path.join(sourceDir, '.nojekyll');
+const nojekyllTarget = path.join(targetDir, '.nojekyll');
+
+fs.copyFileSync(nojekyllSource, nojekyllTarget);
+console.log(`Copied .nojekyll: ${nojekyllSource} -> ${nojekyllTarget}`);
+
+console.log('All files copied successfully.');
