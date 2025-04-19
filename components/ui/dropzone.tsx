@@ -128,7 +128,7 @@ export function Dropzone({
       </div>
 
       {images.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">
+        <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-4">
           {images.map((image, index) => (
             <div
               key={index}

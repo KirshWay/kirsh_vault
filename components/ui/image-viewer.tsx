@@ -54,25 +54,11 @@ export function ImageViewer({ images, open, onOpenChange, initialIndex = 0 }: Pr
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal>
       <DialogContent
-        className="max-w-4xl w-full h-[80vh] p-0 gap-0 bg-background/90 backdrop-blur-sm shadow-2xl"
+        className="max-w-4xl w-full h-[80vh] sm:h-[50vh] p-0 gap-0 bg-background/90 backdrop-blur-sm shadow-2xl"
         data-testid="image-viewer"
       >
         <DialogTitle className="sr-only">Image Viewer</DialogTitle>
         <div className="w-full h-full flex flex-col">
-          <div className="flex justify-between items-center p-2 text-white">
-            <div className="text-sm">
-              {currentIndex + 1} / {images.length}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-white/20 rounded-full"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-
           <div className="relative flex-1 flex items-center justify-center p-4">
             <img
               src={images[currentIndex]}
@@ -85,18 +71,18 @@ export function ImageViewer({ images, open, onOpenChange, initialIndex = 0 }: Pr
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute left-2 rounded-full bg-black/40 hover:bg-black/60 text-white"
+                  className="absolute left-0 sm:left-2 rounded-full bg-black/40 hover:bg-black/60 text-white cursor-pointer"
                   onClick={navigateToPrevious}
                 >
-                  <ChevronLeft className="h-6 w-6" />
+                  <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 rounded-full bg-black/40 hover:bg-black/60 text-white"
+                  className="absolute right-0 sm:right-2 rounded-full bg-black/40 hover:bg-black/60 text-white cursor-pointer"
                   onClick={navigateToNext}
                 >
-                  <ChevronRight className="h-6 w-6" />
+                  <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
                 </Button>
               </>
             )}
@@ -109,7 +95,7 @@ export function ImageViewer({ images, open, onOpenChange, initialIndex = 0 }: Pr
                   <button
                     key={idx}
                     className={cn(
-                      'w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all cursor-pointer',
+                      'w-12 h-12 sm:w-16 sm:h-16 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all cursor-pointer',
                       currentIndex === idx
                         ? 'border-primary'
                         : 'border-transparent opacity-60 hover:opacity-100'

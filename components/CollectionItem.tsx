@@ -121,20 +121,22 @@ export const CollectionItemComponent = ({
             <p className="text-sm text-muted-foreground">{item.description || 'No description'}</p>
 
             {images.length > 1 && (
-              <div className="mt-3 flex gap-2 pb-2">
-                {images.map((image, index) => (
-                  <div
-                    key={index}
-                    className="w-16 h-16 flex-shrink-0 rounded-md overflow-hidden cursor-pointer ring-offset-background transition-all hover:ring-2 hover:ring-ring hover:ring-offset-2"
-                    onClick={() => openImageViewer(index)}
-                  >
-                    <img
-                      src={image}
-                      alt={`${item.name} thumbnail ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
+              <div className="mt-3 overflow-x-auto pb-2">
+                <div className="flex gap-2 flex-nowrap min-w-0">
+                  {images.map((image, index) => (
+                    <div
+                      key={index}
+                      className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden cursor-pointer ring-offset-background transition-all hover:ring-2 hover:ring-ring hover:ring-offset-2"
+                      onClick={() => openImageViewer(index)}
+                    >
+                      <img
+                        src={image}
+                        alt={`${item.name} thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </CardContent>
