@@ -28,9 +28,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { DefaultValues, FormValues } from '@/types';
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: 'Name is required' }),
+  name: z.string().min(1, { error: 'Name is required' }),
   description: z.string().optional(),
-  category: z.enum(['book', 'movie', 'other'], { required_error: 'Please select a category' }),
+  category: z.enum(['book', 'movie', 'other'], {
+    error: (issue) => (issue.input === undefined ? 'Please select a category' : 'Invalid category'),
+  }),
   images: z.array(z.string()).optional(),
   rating: z.number().min(0).max(10).optional(),
 });
