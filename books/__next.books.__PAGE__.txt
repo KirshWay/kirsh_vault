@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[15995,["/kirsh_vault/_next/static/chunks/a36e3ec71a3ae159.js","/kirsh_vault/_next/static/chunks/1595f358cef9a278.js","/kirsh_vault/_next/static/chunks/049e9e616836419d.js","/kirsh_vault/_next/static/chunks/e67fd70582b53c64.js","/kirsh_vault/_next/static/chunks/1f3846e4d5eeacd7.js"],"CategoryPage"]
+3:I[97367,["/kirsh_vault/_next/static/chunks/ff1a16fafef87110.js","/kirsh_vault/_next/static/chunks/247eb132b7f7b574.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"buildId":"ub9B8qS6kR2dhpDGUWJNz","rsc":["$","$1","c",{"children":[["$","$L2",null,{"category":"book"}],[["$","script","script-0",{"src":"/kirsh_vault/_next/static/chunks/e67fd70582b53c64.js","async":true}],["$","script","script-1",{"src":"/kirsh_vault/_next/static/chunks/1f3846e4d5eeacd7.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"loading":null,"isPartial":false}
+5:null
