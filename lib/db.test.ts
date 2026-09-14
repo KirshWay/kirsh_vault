@@ -2,6 +2,8 @@ import 'fake-indexeddb/auto';
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
+import { seedCollection } from '@/tests/helpers/collection';
+
 import { CollectionItem, db, ItemCategory } from './db';
 
 describe('Database API Testing', () => {
@@ -37,7 +39,7 @@ describe('Database API Testing', () => {
       },
     ];
 
-    await db.items.bulkAdd(testItems);
+    await seedCollection(db, testItems);
   });
 
   afterEach(() => {
@@ -78,7 +80,7 @@ describe('Database API Testing', () => {
       rating: 7,
     };
 
-    const newItemId = await db.addItem(newItem);
+    const newItemId = await db.addItem(newItem, (await db.getCollectionState()).generation);
     expect(typeof newItemId).toBe('number');
 
     const addedItem = await db.getItem(newItemId);
@@ -102,7 +104,7 @@ describe('Database API Testing', () => {
       rating: 10,
     };
 
-    await db.updateItem(1, updates);
+    await db.updateItem(1, updates, (await db.getCollectionState()).generation, 0);
 
     const updatedItem = await db.getItem(1);
     expect(updatedItem).toBeDefined();
@@ -113,7 +115,7 @@ describe('Database API Testing', () => {
   });
 
   test('deleteItem should remove item', async () => {
-    await db.deleteItem(1);
+    await db.deleteItem(1, (await db.getCollectionState()).generation, 0);
 
     const deletedItem = await db.getItem(1);
     expect(deletedItem).toBeUndefined();
@@ -157,7 +159,12 @@ describe('Database API Testing', () => {
 
   test('existing records and image data survive closing and reopening the database', async () => {
     const images = ['data:image/png;base64,aGVsbG8='];
-    await db.updateItem(1, { images, description: 'Saved description' });
+    await db.updateItem(
+      1,
+      { images, description: 'Saved description' },
+      (await db.getCollectionState()).generation,
+      0
+    );
     db.close();
     await db.open();
 
@@ -176,7 +183,8 @@ describe('Filtered pagination', () => {
   beforeEach(async () => {
     await db.delete();
     await db.open();
-    await db.items.bulkAdd(
+    await seedCollection(
+      db,
       Array.from({ length: 30 }, (_, i) => ({
         id: i + 1,
         name: i === 0 ? 'Needle' : `Book ${i + 1}`,
@@ -211,6 +219,45 @@ describe('Filtered pagination', () => {
     } finally {
       db.items.hook('reading').unsubscribe(observe);
     }
+  });
+
+  test.each([{ searchQuery: 'Needle' }, { ratingFilter: { type: 'min' as const, minValue: 8 } }])(
+    'filtered pagination loads full records only for the visible matches: %j',
+    async (filters) => {
+      const images = ['data:image/png;base64,' + 'a'.repeat(100_000)];
+      await db.updateItem(1, { images }, (await db.getCollectionState()).generation, 0);
+      const reads: number[] = [];
+      const observe = (item: CollectionItem) => {
+        reads.push(item.id);
+        return item;
+      };
+      db.items.hook('reading', observe);
+      try {
+        const page = await db.getItemsPage(1, 12, filters);
+        expect(page.items.map((item) => item.id)).toEqual([1]);
+        expect(page.items[0].images).toEqual(images);
+        expect(reads).toEqual([1]);
+      } finally {
+        db.items.hook('reading').unsubscribe(observe);
+      }
+    }
+  );
+
+  test('search reflects creates, edits, category changes, deletions and empty restore', async () => {
+    const { generation } = await db.getCollectionState();
+    const id = await db.addItem({ name: 'Unique', category: 'book', rating: 9 }, generation);
+    expect(
+      (await db.getItemsPage(1, 12, { searchQuery: 'Unique' })).items.map((item) => item.id)
+    ).toEqual([id]);
+    await db.updateItem(id, { name: 'Renamed', category: 'movie', rating: 2 }, generation, 0);
+    expect((await db.getItemsPage(1, 12, { searchQuery: 'Unique' })).total).toBe(0);
+    expect(
+      (await db.getItemsPage(1, 12, { searchQuery: 'Renamed', category: 'movie' })).total
+    ).toBe(1);
+    await db.deleteItem(id, generation, 1);
+    expect((await db.getItemsPage(1, 12, { searchQuery: 'Renamed' })).total).toBe(0);
+    await seedCollection(db, []);
+    expect((await db.getItemsPage(1, 12, { searchQuery: 'Needle' })).total).toBe(0);
   });
 
   test('requests beyond the final page are clamped to an existing page', async () => {

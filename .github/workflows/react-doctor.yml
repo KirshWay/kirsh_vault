@@ -1,0 +1,43 @@
+name: React Doctor
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: react-doctor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  react-doctor:
+    name: React Doctor (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Telemetry initializes before the CLI reads doctor.config.json.
+      REACT_DOCTOR_NO_TELEMETRY: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Review React changes
+        uses: millionco/react-doctor@v2
+        with:
+          version: '0.9.14'
+          node-version: '24.21.0'
+          scope: changed
+          blocking: none
+          comment: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+          review-comments: false
+          commit-status: false

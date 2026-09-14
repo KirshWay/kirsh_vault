@@ -1,90 +1,95 @@
 # Kirsh Vault
 
-A personal collection tracker for books, movies and other items. Built with Next.js, React and TypeScript, with data stored locally in the browser.
+Keep your books, movies and personal finds in one collection. Add notes and photos, revisit them offline, and move everything to another browser with a ZIP backup.
 
-**[Open the app](https://kirshway.github.io/kirsh_vault/)**
+**[Open Kirsh Vault](https://kirshway.github.io/kirsh_vault/)** · [Run locally](#run-locally) · [Development guide](docs/development.md)
 
-## What it does
+<picture>
+  <source media="(max-width: 600px)" srcset="assets/readme/collection-mobile.webp">
+  <img src="assets/readme/collection.webp" width="100%" alt="Kirsh Vault showing a sample collection of books, movies and other items, with search, category filters, ratings and the Data menu.">
+</picture>
 
-- Create, edit and delete entries with descriptions and up to five images.
-- Rate books and movies on a 0–10 scale; move entries between categories.
-- Search names and descriptions across the entire collection, combine category and rating filters, and browse matching results in pages of 12.
-- Use the app offline after its first successful online installation. Installation as a standalone PWA depends on browser support.
-- Navigate with a keyboard, zoom the page and use the system's reduced-motion preference.
+_The application running locally with illustrative sample entries._
+
+## Collection tools
+
+- **Organize:** books, movies and other items, with descriptions, up to five photos, and ratings for books and movies.
+- **Find:** search names and descriptions across the collection, combine category and rating filters, and browse paginated results.
+- **Inspect:** a gallery that fits the viewport, with zoom, panning, thumbnails and keyboard controls.
+- **Keep using it offline:** once the application has cached its assets, collections and backups work without a connection.
+- **Take it with you:** export entries and their images together, then preview a backup before restoring it elsewhere.
+
+Built with **Next.js, React, TypeScript and Dexie**. Collection data lives in IndexedDB in your browser; the application has no account system, backend API, analytics or cloud synchronization.
+
+## Backup and restore
+
+The **Data** menu always acts on the whole collection, including entries hidden by filters.
+
+1. Choose **Download backup**, wait for preparation, then **Save backup**. The ZIP contains entries and their stored image bytes. Preparation can be cancelled; the app cannot confirm that you finished saving the file.
+2. In the destination browser, choose **Restore from file**. The app validates the archive locally and shows its date, category counts, images and example entries before changing anything.
+3. If needed, choose **Download current backup**, then **Save current backup**, without losing the prepared import.
+4. Choose **Replace collection** to replace all current entries in one transaction. Search, filters and pagination reset after success.
+
+**Restoration replaces the collection; it does not merge it.** An empty backup deletes all current entries. There is no built-in undo. Backup files are **unencrypted**, so keep a copy somewhere appropriate outside the browser.
+
+<details>
+<summary>See the restore preview</summary>
+
+<img src="assets/readme/restore.webp" width="520" alt="Restore preview showing the backup date, counts by category, three example entries, the replacement warning and the option to download the current collection first.">
+
+</details>
+
+## Engineering decisions
+
+**Validate first, replace atomically.** ZIP work runs in a dedicated Web Worker. Verified entries are staged separately; only confirmation opens the replacement transaction. A write failure rolls back the replacement. A committed operation receipt lets the UI recognize success even if the worker's final message is lost. [Format and guarantees →](docs/backup-format.md)
+
+**Treat other tabs as concurrent writers.** Web Locks serialize backup sessions. Revisions detect edits after preview, and a collection generation prevents an old form from overwriting restored data. Conflicting drafts stay visible. [Database operations →](lib/db.ts)
+
+**Read only the data a view needs.** Category pages use an index. Search scans lightweight records without images, ranks results before pagination, then loads the visible entries. Search remains linear and is intended for personal collections. [Collection queries →](lib/hooks/useCollectionItems.ts)
+
+**Keep offline releases consistent.** The service worker caches the static build, including lazy-loaded gallery and backup modules. An update activates after tabs using the old release close, so assets are not replaced underneath an open form. [Offline lifecycle →](docs/development.md#offline-releases-and-deployment)
+
+The [development guide](docs/development.md#code-map) maps these responsibilities to their source files.
 
 ## Run locally
 
-Use **Node.js 24.17.0** and **Bun 1.4.2**, matching CI and the `packageManager` field. Bun installs dependencies and runs package scripts; Next.js and Vitest execute with Node.js.
+Use **Node.js 24.21.0** and **Bun 1.4.2**, matching CI.
 
 ```sh
+git clone https://github.com/KirshWay/kirsh_vault.git
+cd kirsh_vault
 bun install --frozen-lockfile
 bun run dev
 ```
 
-Open the local address printed by Next.js in the terminal. The service worker is disabled in development so cached production assets cannot interfere with hot reload.
+Open the address printed in the terminal. No environment variables, credentials or database server are required. The service worker is disabled in development.
 
-## Build for GitHub Pages
-
-```sh
-bun run build
-```
-
-The build generates static files in `out/`, including the offline worker. GitHub Actions publishes this directory to GitHub Pages on pushes to `main`; no application server is required on the host. See the [Next.js static-export guide](https://nextjs.org/docs/app/guides/static-exports) and [GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
-
-## Check changes
+## Verification and deployment
 
 ```sh
 bun run lint
 bun run typecheck
 bun run test
-bun run test:coverage
 bun audit
 bun run build
 ```
 
-`bun run test:watch` starts watch mode. Coverage is collected with Vitest's V8 provider and written to `coverage/`; it includes application files that have no tests, rather than reporting only exercised files.
+For browser tests, install the test browsers once and run against that production build:
 
-Regression tests cover real Dexie queries with an isolated in-memory IndexedDB implementation, schema migration, search before pagination, category moves, storage failures, duplicate submissions, image processing, keyboard interactions and service-worker cache isolation. Worker tests use browser API substitutes; verify installation and updates in a real browser before releasing changes to offline behavior.
+```sh
+bunx playwright install --with-deps chromium firefox webkit
+bun run test:e2e
+```
 
-Offline behavior must be checked against a production export: verify direct category loads without a network connection and activation of a downloaded update after all old app tabs close. A local static server used for this check must serve the export at `/kirsh_vault/`, matching the deployed site.
+Tests cover migration, byte-for-byte backup round trips, malformed archives, transaction rollback, cancellation, concurrent tabs, stale forms, gallery navigation and offline startup. Playwright runs headlessly in Chromium, Firefox and WebKit. Touch-gesture injection is additionally checked in Chromium emulation; it is not a physical-device test.
 
-## Architecture
+[GitHub Actions](.github/workflows/deploy.yml) runs the checks on pull requests and pushes to `main`. Only a successful push build on `main` publishes the tested `out/` artifact to `gh-pages`. [React Doctor](.github/workflows/react-doctor.yml) runs separately in advisory mode. See the [development guide](docs/development.md) for coverage, analysis settings and the optional large-backup benchmark.
 
-| Area                                      | Responsibility                                                     |
-| ----------------------------------------- | ------------------------------------------------------------------ |
-| `app/`                                    | Static routes, metadata and the application shell                  |
-| `components/templates/CollectionPage.tsx` | Shared collection screen for Home and category pages               |
-| `lib/hooks/useCollectionItems.ts`         | Reactive data queries, filtering, pagination and mutation feedback |
-| `lib/db.ts`                               | IndexedDB schema, migration and transactional queries              |
-| `lib/search.ts`                           | Search ranking and rating/category predicates                      |
-| `lib/item-schema.ts`                      | Form validation and inferred data types                            |
-| `lib/images.ts`                           | Image resizing and normalization before storage                    |
-| `components/ui/`                          | Accessible controls built with Radix UI and Tailwind CSS           |
-| `scripts/build-service-worker.mjs`        | Release manifest and content-versioned offline worker              |
-| `scripts/service-worker.js`               | Cache installation, request handling and release cleanup           |
+## Limits and privacy
 
-Data flows from the validated form to Dexie. Its live queries refresh lists and counts after changes, including writes from another tab. A failed save keeps the form open; a failed read displays a retryable error instead of an empty collection.
+- **Local storage:** data belongs to the current browser profile and origin. Clearing site data or browser eviction can remove it. Offline caching is not a backup, and stored entries are not encrypted.
+- **Backups:** up to 250 MiB each for the ZIP and its unpacked contents, 10,000 entries and five images per entry. Images support JPEG, PNG and WebP, up to 10 MiB and 40 megapixels each. Preparation needs additional browser storage; quota errors abort without a partial replacement.
+- **Photos:** ordinary uploads are resized to at most 1600 pixels on the longest edge. Zoom displays the stored detail. Backup restores preserve image bytes without another resize or re-encode; external image URLs are never fetched.
+- **Browsers:** the app relies on IndexedDB, Web Workers, Web Locks and service workers. Offline use requires an initial successful online cache installation. Standalone PWA installation depends on the browser.
 
-Unfiltered category pages use a compound category/date index and read only the requested page. Text search ranks matching entries before pagination and currently scans the selected collection; it is intended for personal collections rather than a full-text search workload. New images are decoded sequentially, resized to a maximum of 1600 pixels on the longest side, and re-encoded for storage. Existing image data is preserved.
-
-## Offline releases and deployment
-
-The worker precaches the static export, including Next.js navigation payloads and application chunks. Each build derives its cache revision from file contents. It serves a consistent release, handles static-route aliases and HEAD requests, and only cleans up this application's caches.
-
-A downloaded update activates after all tabs using the previous release close. This follows the [service-worker lifecycle](https://developer.chrome.com/docs/workbox/service-worker-lifecycle) and avoids replacing resources underneath an open form. Reopen the app to use the installed update.
-
-GitHub Actions deploys **pushes to `main` only**. It installs the frozen lockfile, audits dependencies, runs lint, type checking and tests, then builds and publishes `out/` to `gh-pages`. The production base path is defined in `lib/config/site.mjs`; the manifest also targets `/kirsh_vault/`.
-
-Security and cache headers must be configured by the hosting provider. Next.js `headers()` is not available for a static export.
-
-## Storage and privacy
-
-There is no account, backend API, analytics or cloud synchronization. Entries and images are stored in IndexedDB for the current browser profile and origin. They are not encrypted and should not contain passwords or other secrets.
-
-Clearing site data, changing browsers or browser storage eviction can remove or separate the collection. Offline caching does not back up IndexedDB. The app currently has no export/import or cloud recovery feature. Browser storage limits and persistence vary by platform; see [MDN's storage guide](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria).
-
-## Main libraries
-
-Next.js · React · TypeScript · Dexie and dexie-react-hooks · React Hook Form and Zod · Radix UI · Tailwind CSS · Motion · React Hot Toast · Vitest and Testing Library.
-
-Dependency versions are pinned in `package.json` where appropriate and resolved in `bun.lock`. Keep the lockfile with dependency changes and run the checks above before deployment.
+[Backup specification and measured performance](docs/backup-format.md) · [Development and verification](docs/development.md)

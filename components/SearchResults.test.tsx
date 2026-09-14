@@ -1,15 +1,10 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { CollectionItem } from '@/lib/db';
 
 import { SearchResults } from './SearchResults';
-
-vi.mock('./CollectionItem', () => ({
-  CollectionItemComponent: ({ item }: { item: CollectionItem }) => (
-    <div data-testid={`item-${item.id}`}>{item.name}</div>
-  ),
-}));
 
 describe('SearchResults component', () => {
   let testItems: CollectionItem[];
@@ -59,8 +54,8 @@ describe('SearchResults component', () => {
       />
     );
 
-    expect(screen.getByText('War and Peace')).toBeDefined();
-    expect(screen.getByText('Interstellar')).toBeDefined();
+    expect(screen.getByText('War and Peace')).toBeInTheDocument();
+    expect(screen.getByText('Interstellar')).toBeInTheDocument();
   });
 
   test('should display search results count when searching', () => {
@@ -102,7 +97,8 @@ describe('SearchResults component', () => {
     expect(screen.getByText('Nothing found for "Not found query"')).toBeInTheDocument();
   });
 
-  test('should pass correct props to CollectionItemComponent', () => {
+  test('routes edit, delete and expand actions to the corresponding record', async () => {
+    const user = userEvent.setup();
     render(
       <SearchResults
         items={testItems}
@@ -117,25 +113,19 @@ describe('SearchResults component', () => {
       />
     );
 
-    expect(screen.getByTestId('item-1')).toBeDefined();
-    expect(screen.getByTestId('item-2')).toBeDefined();
-  });
-
-  test('should render animation container', () => {
-    const { container } = render(
-      <SearchResults
-        items={testItems}
-        isSearching={false}
-        searchQuery=""
-        resultsCount={2}
-        totalCount={2}
-        onItemDelete={mockHandlers.onItemDelete}
-        onItemEdit={mockHandlers.onItemEdit}
-        onItemExpand={mockHandlers.onItemExpand}
-        expandedItemId={null}
-      />
+    expect(screen.getByRole('button', { name: 'Collapse War and Peace' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
     );
-
-    expect(container.querySelector('.grid')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Expand Interstellar' })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    await user.click(screen.getAllByRole('button', { name: 'Edit' })[1]);
+    expect(mockHandlers.onItemEdit).toHaveBeenCalledExactlyOnceWith(testItems[1]);
+    await user.click(screen.getAllByRole('button', { name: 'Delete' })[0]);
+    expect(mockHandlers.onItemDelete).toHaveBeenCalledExactlyOnceWith(1);
+    await user.click(screen.getByRole('button', { name: 'Expand Interstellar' }));
+    expect(mockHandlers.onItemExpand).toHaveBeenCalledExactlyOnceWith(2);
   });
 });

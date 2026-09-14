@@ -1,0 +1,22 @@
+{
+  "format": "kirsh-vault-backup",
+  "formatVersion": 1,
+  "exportedAt": "2026-09-14T12:00:00.000Z",
+  "items": [
+    {
+      "id": 7,
+      "name": "  A book  ",
+      "description": "First line\nSecond line  ",
+      "category": "book",
+      "rating": 7.5,
+      "createdAt": "2024-01-02T03:04:05.006Z",
+      "images": ["images/7/0.png"]
+    },
+    {
+      "id": 12,
+      "name": "An item",
+      "category": "other",
+      "createdAt": "2024-01-02T03:04:05.006Z"
+    }
+  ]
+}

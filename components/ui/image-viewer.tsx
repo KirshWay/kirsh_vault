@@ -1,13 +1,20 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import 'yet-another-react-lightbox/styles.css';
 
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { imageEntries } from '@/lib/images';
-import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
+import Lightbox, {
+  IconButton,
+  useController,
+  useLightboxState,
+  useLoseFocus,
+  type ZoomRef,
+} from 'yet-another-react-lightbox';
+import Zoom from 'yet-another-react-lightbox/plugins/zoom';
+
+import styles from './image-viewer.module.css';
+import { GalleryLayoutPlugin } from './image-viewer-layout';
 
 type Props = {
   images: string[];
@@ -16,120 +23,112 @@ type Props = {
   initialIndex?: number;
 };
 
+function ImageCounter() {
+  const { currentIndex, slides } = useLightboxState();
+  return (
+    <span className={styles.counter} aria-hidden="true">
+      {currentIndex + 1} <span>/ {slides.length}</span>
+    </span>
+  );
+}
+
+function ZoomControls({ zoom, minZoom, maxZoom, disabled, zoomIn, zoomOut, changeZoom }: ZoomRef) {
+  const { focus } = useController();
+  const cannotZoomIn = disabled || zoom >= maxZoom;
+  const cannotZoomOut = disabled || zoom <= minZoom;
+  const cannotFit = disabled || zoom === 1;
+  const zoomInFocus = useLoseFocus(focus, cannotZoomIn);
+  const zoomOutFocus = useLoseFocus(focus, cannotZoomOut);
+  const fitFocus = useLoseFocus(focus, cannotFit);
+
+  return (
+    <>
+      <IconButton
+        label="Zoom out"
+        icon={ZoomOut}
+        disabled={cannotZoomOut}
+        onClick={zoomOut}
+        {...zoomOutFocus}
+      />
+      <IconButton
+        label="Zoom in"
+        icon={ZoomIn}
+        disabled={cannotZoomIn}
+        onClick={zoomIn}
+        {...zoomInFocus}
+      />
+      <button
+        type="button"
+        className={`yarl__button ${styles.fit}`}
+        aria-label="Fit image"
+        title="Fit image"
+        disabled={cannotFit}
+        onClick={() => changeZoom(1)}
+        {...fitFocus}
+      >
+        Fit
+      </button>
+    </>
+  );
+}
+
 export function ImageViewer({ images, open, onOpenChange, initialIndex = 0 }: Props) {
+  const descriptionId = useId();
+  const [keyboardInput, setKeyboardInput] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [previousProps, setPreviousProps] = useState({ open, initialIndex });
-
   const propsChanged = previousProps.open !== open || previousProps.initialIndex !== initialIndex;
-  if (propsChanged) {
-    setPreviousProps({ open, initialIndex });
-  }
+  if (propsChanged) setPreviousProps({ open, initialIndex });
   const requestedIndex = propsChanged && open ? initialIndex : currentIndex;
   const validIndex = Math.max(0, Math.min(requestedIndex, images.length - 1));
   if (currentIndex !== validIndex) setCurrentIndex(validIndex);
 
-  const navigateToPrevious = useCallback(() => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
-  }, [images.length]);
-
-  const navigateToNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
-  }, [images.length]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        navigateToPrevious();
-      } else if (e.key === 'ArrowRight') {
-        navigateToNext();
-      } else if (e.key === 'Escape') {
-        onOpenChange(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, navigateToPrevious, navigateToNext, onOpenChange]);
-
+  const slides = useMemo(
+    () => images.map((src, index) => ({ src, alt: `Image ${index + 1}` })),
+    [images]
+  );
   if (!images.length) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} modal>
-      <DialogContent
-        className="max-w-4xl w-full h-[80vh] sm:h-[50vh] p-0 gap-0 bg-background/90 backdrop-blur-sm shadow-2xl"
-        data-testid="image-viewer"
-      >
-        <DialogTitle className="sr-only">Image Viewer</DialogTitle>
-        <DialogDescription className="sr-only">
-          Use the arrow keys to browse images and Escape to close.
-        </DialogDescription>
-        <div className="w-full h-full flex flex-col">
-          <div className="relative flex-1 flex items-center justify-center p-4">
-            <Image
-              unoptimized
-              width={1600}
-              height={1600}
-              src={images[currentIndex]}
-              alt={`Image ${currentIndex + 1}`}
-              className="max-h-[60vh] h-full w-full object-contain"
-            />
-
-            {images.length > 1 && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-0 sm:left-2 rounded-full bg-black/40 hover:bg-black/60 text-white cursor-pointer"
-                  aria-label="Previous image"
-                  onClick={navigateToPrevious}
-                >
-                  <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 sm:right-2 rounded-full bg-black/40 hover:bg-black/60 text-white cursor-pointer"
-                  aria-label="Next image"
-                  onClick={navigateToNext}
-                >
-                  <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-                </Button>
-              </>
-            )}
-          </div>
-
-          {images.length > 1 && (
-            <div className="p-2 overflow-x-auto">
-              <div className="flex space-x-2 justify-center">
-                {imageEntries(images).map(({ src: img, key }, idx) => (
-                  <button
-                    key={key}
-                    className={cn(
-                      'w-12 h-12 sm:w-16 sm:h-16 rounded-md overflow-hidden flex-shrink-0 border-2 transition-[border-color,opacity] cursor-pointer',
-                      currentIndex === idx
-                        ? 'border-primary'
-                        : 'border-transparent opacity-60 hover:opacity-100'
-                    )}
-                    onClick={() => setCurrentIndex(idx)}
-                  >
-                    <Image
-                      unoptimized
-                      width={1600}
-                      height={1600}
-                      src={img}
-                      alt={`Thumbnail ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <Lightbox
+      open={open}
+      close={() => onOpenChange(false)}
+      index={validIndex}
+      slides={slides}
+      on={{ view: ({ index }) => setCurrentIndex(index) }}
+      plugins={[Zoom, GalleryLayoutPlugin]}
+      className={styles.gallery}
+      labels={{
+        Lightbox: 'Image viewer',
+        Previous: 'Previous image',
+        Next: 'Next image',
+        '{index} of {total}': 'Image {index} of {total}',
+      }}
+      portal={{
+        container: {
+          'aria-describedby': descriptionId,
+          onKeyDownCapture: () => setKeyboardInput(true),
+          onPointerDownCapture: () => setKeyboardInput(false),
+        },
+      }}
+      carousel={{ padding: 16, preload: 2, imageFit: 'contain' }}
+      controller={{ closeOnBackdropClick: false }}
+      toolbar={{ buttons: [<ImageCounter key="counter" />, 'zoom', 'close'] }}
+      animation={{ fade: 180, swipe: 220, navigation: 0, zoom: keyboardInput ? 0 : 200 }}
+      render={{
+        iconPrev: () => <ChevronLeft aria-hidden="true" />,
+        iconNext: () => <ChevronRight aria-hidden="true" />,
+        iconClose: () => <X aria-hidden="true" />,
+        buttonZoom: (props) => <ZoomControls {...props} />,
+        ...(images.length === 1 ? { buttonPrev: () => null, buttonNext: () => null } : {}),
+        controls: () => (
+          <p id={descriptionId} className="sr-only">
+            Use the arrow keys to browse images. Zoom with the buttons, double-click or pinch. When
+            zoomed in, drag or use arrow keys to move around the image. Fit shows the whole image.
+            Press Escape to close.
+          </p>
+        ),
+      }}
+    />
   );
 }

@@ -29,12 +29,14 @@ import { itemSchema } from '@/lib/item-schema';
 import { DefaultValues, FormValues } from '@/types';
 
 type Props = {
+  stale?: boolean;
+  conflict?: string | null;
   defaultValues?: DefaultValues | null;
   onSubmit: (data: FormValues) => Promise<unknown>;
   onCancel: () => void;
 };
 
-export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
+export const ItemForm = ({ defaultValues, onSubmit, onCancel, stale = false, conflict }: Props) => {
   const [processingImages, setProcessingImages] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(itemSchema),
@@ -49,6 +51,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
 
   const currentCategory = useWatch({ control: form.control, name: 'category' });
   const handleSubmit = async (data: FormValues) => {
+    if (stale || conflict || processingImages) return;
     await onSubmit({ ...data, rating: data.category === 'other' ? 0 : data.rating });
   };
 
@@ -56,7 +59,21 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="flex min-h-0 flex-col">
         <div className="min-h-0 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {stale && (
+            <p role="alert" className="mb-4 rounded-md border p-3 text-sm">
+              The collection was restored. Your draft is still shown here. Copy anything you need,
+              then close this form and reopen the item.
+            </p>
+          )}
+          {!stale && conflict && (
+            <p role="alert" className="mb-4 rounded-md border p-3 text-sm">
+              {conflict} Your draft is still shown here; copy anything you need before closing.
+            </p>
+          )}
+          <fieldset
+            disabled={form.formState.isSubmitting}
+            className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -77,7 +94,11 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    disabled={form.formState.isSubmitting}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
@@ -136,11 +157,10 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
                 <FormItem className="min-w-0 sm:col-span-2">
                   <FormLabel>Images</FormLabel>
                   <Dropzone
+                    disabled={form.formState.isSubmitting}
                     onProcessingChange={setProcessingImages}
                     images={field.value ?? []}
                     onChange={field.onChange}
-                    maxFiles={5}
-                    maxSize={10 * 1024 * 1024}
                     accept={{
                       'image/jpeg': ['.jpeg', '.jpg'],
                       'image/png': ['.png'],
@@ -151,7 +171,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
                 </FormItem>
               )}
             />
-          </div>
+          </fieldset>
         </div>
 
         <div className="flex shrink-0 justify-end gap-2 border-t bg-background px-4 py-4 sm:px-6">
@@ -167,7 +187,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
           <Button
             type="submit"
             className="cursor-pointer"
-            disabled={form.formState.isSubmitting || processingImages}
+            disabled={stale || !!conflict || form.formState.isSubmitting || processingImages}
           >
             {form.formState.isSubmitting
               ? 'Saving…'

@@ -9,9 +9,12 @@ import { DbProvider } from '@/lib/context/DbContext';
 import { db } from '@/lib/db';
 import { useCategoryItems } from '@/lib/hooks/useCategoryItems';
 import { useCollectionItems } from '@/lib/hooks/useCollectionItems';
+import { seedCollection } from '@/tests/helpers/collection';
 
 import { ItemForm } from './ItemForm';
 import { CategoryPage } from './templates/CategoryPage';
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <DbProvider>{children}</DbProvider>
@@ -28,7 +31,8 @@ afterEach(() => {
 });
 
 async function seed(count: number) {
-  await db.items.bulkAdd(
+  await seedCollection(
+    db,
     Array.from({ length: count }, (_, i) => ({
       id: i + 1,
       name: i === 0 ? 'Older hidden record' : `Book ${i + 1}`,
@@ -37,6 +41,29 @@ async function seed(count: number) {
     }))
   );
 }
+
+test('restoration blocks an open edit form without discarding its draft', async () => {
+  await seed(1);
+  render(<Home />, { wrapper });
+  fireEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+  fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Keep this draft' } });
+  const state = await db.getCollectionState();
+  const item = {
+    id: 1,
+    name: 'Restored record',
+    category: 'other' as const,
+    createdAt: new Date(),
+  };
+  await act(async () => {
+    await db.stagedItems.put({ operationId: 'external', id: 1, item });
+    await db.restoreSessions.put({ id: 'external', itemCount: 1 });
+    await db.replaceFromStaging('external', state.revision);
+  });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Update Item' })).toBeDisabled());
+  expect(screen.getByLabelText('Name')).toHaveValue('Keep this draft');
+  expect(screen.getByRole('alert')).toHaveTextContent(/restored/i);
+  expect((await db.getItem(1))?.name).toBe('Restored record');
+});
 
 test('adding the thirteenth item updates pagination without a reload', async () => {
   await seed(12);
@@ -66,7 +93,10 @@ test('editing an item can move it out of its current category', async () => {
   const { result } = renderHook(() => useCategoryItems('book'), { wrapper });
   await waitFor(() => expect(result.current.isLoading).toBe(false));
   await act(async () => {
-    await result.current.updateItem(1, { name: 'Moved item', category: 'movie' });
+    await result.current.updateItem(result.current.items[0], {
+      name: 'Moved item',
+      category: 'movie',
+    });
   });
   expect((await db.getItem(1))?.category).toBe('movie');
   await waitFor(() => expect(result.current.items).toHaveLength(0));
@@ -153,19 +183,156 @@ test('saving the first item restores focus to Add Item after the empty-state but
 
 test('an open gallery keeps a valid image when a live database update removes the selected image', async () => {
   await seed(1);
-  await db.updateItem(1, { images: ['/first.png', '/second.png'] });
+  await db.updateItem(
+    1,
+    { images: ['/first.png', '/second.png'] },
+    (await db.getCollectionState()).generation,
+    0
+  );
   const user = userEvent.setup();
   render(<Home />, { wrapper });
   await user.click(
     await screen.findByRole('button', { name: 'View images for Older hidden record' })
   );
-  await user.click(screen.getByRole('button', { name: 'Next image' }));
-  expect(screen.getByAltText('Image 2')).toHaveAttribute('src', '/second.png');
+  await user.click(await screen.findByRole('button', { name: 'Next image' }));
+  await waitFor(() =>
+    expect(document.querySelector('[role="group"]:not([inert]) img')).toHaveAttribute(
+      'src',
+      '/second.png'
+    )
+  );
   await act(async () => {
-    await db.updateItem(1, { images: ['/first.png'] });
+    await db.updateItem(
+      1,
+      { images: ['/first.png'] },
+      (await db.getCollectionState()).generation,
+      1
+    );
   });
   await waitFor(() =>
     expect(screen.queryByRole('button', { name: 'Next image' })).not.toBeInTheDocument()
   );
-  expect(screen.getByAltText('Image 1')).toHaveAttribute('src', '/first.png');
+  expect(document.querySelector('[role="group"]:not([inert]) img')).toHaveAttribute(
+    'src',
+    '/first.png'
+  );
+});
+
+test('a conflicting edit preserves the draft and explains why saving is blocked', async () => {
+  await seed(1);
+  const user = userEvent.setup();
+  render(<Home />, { wrapper });
+  await user.click(await screen.findByRole('button', { name: 'Edit' }));
+  await user.clear(screen.getByLabelText('Name'));
+  await user.type(screen.getByLabelText('Name'), 'Keep my draft');
+  await act(async () => {
+    await db.updateItem(
+      1,
+      { description: 'Saved in another tab' },
+      (await db.getCollectionState()).generation,
+      0
+    );
+  });
+  await user.click(screen.getByRole('button', { name: 'Update Item' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(/changed/i);
+  expect(screen.getByLabelText('Name')).toHaveValue('Keep my draft');
+  expect(screen.getByRole('button', { name: 'Update Item' })).toBeDisabled();
+  expect((await db.getItem(1))?.description).toBe('Saved in another tab');
+});
+
+test('deleting requires confirmation, supports cancellation and returns focus after success', async () => {
+  await seed(1);
+  const user = userEvent.setup();
+  render(<Home />, { wrapper });
+  const trigger = await screen.findByRole('button', { name: 'Delete' });
+  await user.click(trigger);
+  const dialog = await screen.findByRole('dialog');
+  expect(dialog).toHaveTextContent('Older hidden record');
+  expect(await db.items.count()).toBe(1);
+  expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
+  await user.click(screen.getByRole('button', { name: 'Cancel' }));
+  await waitFor(() => expect(trigger).toHaveFocus());
+  expect(await db.items.count()).toBe(1);
+  await user.click(trigger);
+  await user.click(screen.getByRole('button', { name: 'Delete item' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(await db.items.count()).toBe(0);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Add Item' })).toHaveFocus());
+});
+
+test.each(['edit', 'restore'] as const)(
+  'an outdated deletion confirmation cannot remove an item after %s',
+  async (change) => {
+    await seed(1);
+    const user = userEvent.setup();
+    render(<Home />, { wrapper });
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+    await screen.findByRole('dialog');
+    await act(async () => {
+      if (change === 'restore')
+        await seedCollection(db, [
+          { id: 1, name: 'Restored item', category: 'book', createdAt: new Date() },
+        ]);
+      else
+        await db.updateItem(
+          1,
+          { name: 'Newer edit' },
+          (await db.getCollectionState()).generation,
+          0
+        );
+    });
+    await user.click(screen.getByRole('button', { name: 'Delete item' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/changed|restored/i);
+    expect(await db.items.count()).toBe(1);
+    expect(screen.getByRole('button', { name: 'Delete item' })).toBeDisabled();
+  }
+);
+
+test('a pending deletion blocks dismissal and finishes only after the database write', async () => {
+  await seed(1);
+  let finish!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  const remove = db.deleteItem.bind(db);
+  vi.spyOn(db, 'deleteItem').mockImplementation(async (...args) => {
+    await pending;
+    await remove(...args);
+  });
+  const user = userEvent.setup();
+  render(<Home />, { wrapper });
+  await user.click(await screen.findByRole('button', { name: 'Delete' }));
+  await user.click(screen.getByRole('button', { name: 'Delete item' }));
+  expect(screen.getByRole('button', { name: 'Deleting…' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled();
+  await user.keyboard('{Escape}');
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  expect(await db.items.count()).toBe(1);
+  await act(async () => {
+    finish();
+  });
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(await db.items.count()).toBe(0);
+});
+
+test('a failed deletion preserves the record and lets the user retry', async () => {
+  await seed(1);
+  const user = userEvent.setup();
+  const fail = () => {
+    throw new Error('Storage write failed');
+  };
+  db.items.hook('deleting', fail);
+  try {
+    render(<Home />, { wrapper });
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Delete item' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Delete item' })).toBeEnabled());
+    expect((await db.getItem(1))?.name).toBe('Older hidden record');
+  } finally {
+    db.items.hook('deleting').unsubscribe(fail);
+  }
+  await user.click(screen.getByRole('button', { name: 'Delete item' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(await db.items.count()).toBe(0);
 });

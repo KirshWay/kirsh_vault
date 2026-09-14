@@ -1,4 +1,4 @@
-import { ReactNode, RefObject, useRef } from 'react';
+import { ReactNode, RefObject, useEffect, useRef, useState } from 'react';
 
 import { ItemForm } from '@/components/ItemForm';
 import {
@@ -12,6 +12,8 @@ import {
 import { DefaultValues, FormValues } from '@/types';
 
 type Props = {
+  stale?: boolean;
+  conflict?: string | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: FormValues) => Promise<boolean>;
@@ -22,6 +24,8 @@ type Props = {
 };
 
 export const ItemFormModal = ({
+  stale = false,
+  conflict,
   trigger,
   isOpen,
   onOpenChange,
@@ -31,23 +35,49 @@ export const ItemFormModal = ({
   fallbackFocusRef,
 }: Props) => {
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const [saving, setSaving] = useState(false);
   const handleSubmit = async (data: FormValues) => {
-    const success = await onSubmit(data);
-    if (success) {
-      // The live query may remove the original button after the dialog closes.
-      returnFocusRef.current = fallbackFocusRef?.current ?? returnFocusRef.current;
-      onOpenChange(false);
+    if (saving) return;
+    setSaving(true);
+    try {
+      const success = await onSubmit(data);
+      if (success && mounted.current) {
+        // The live query may remove the original button after the dialog closes.
+        returnFocusRef.current = fallbackFocusRef?.current ?? returnFocusRef.current;
+        onOpenChange(false);
+      }
+    } finally {
+      if (mounted.current) setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    onOpenChange(false);
+    if (!saving) onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!saving) onOpenChange(open);
+      }}
+    >
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
+        closeDisabled={saving}
+        onEscapeKeyDown={(event) => {
+          if (saving) event.preventDefault();
+        }}
+        onInteractOutside={(event) => {
+          if (saving) event.preventDefault();
+        }}
         className="flex max-h-[90dvh] flex-col overflow-hidden md:max-w-2xl md:p-0 max-md:max-h-[90dvh] max-md:overflow-hidden max-md:p-0"
         containerClassName="flex min-h-0 flex-col"
         onOpenAutoFocus={() => {
@@ -68,7 +98,13 @@ export const ItemFormModal = ({
             Enter item details. Changes are saved in this browser.
           </DialogDescription>
         </DialogHeader>
-        <ItemForm defaultValues={defaultValues} onSubmit={handleSubmit} onCancel={handleCancel} />
+        <ItemForm
+          conflict={conflict}
+          stale={stale}
+          defaultValues={defaultValues}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -18,10 +18,12 @@ const source = readFileSync(new URL('./service-worker.js', import.meta.url), 'ut
 function harness() {
   const handlers: Record<string, (event: Record<string, unknown>) => void> = {};
   const stores = new Map<string, Map<string, Response>>();
-  const fetch = vi.fn(
-    async (request: Request | string) =>
-      new Response(typeof request === 'string' ? request : request.url)
-  );
+  const fetch = vi.fn(async (request: Request | string) => {
+    const url = typeof request === 'string' ? request : request.url;
+    const response = new Response(url);
+    Object.defineProperty(response, 'url', { value: url });
+    return response;
+  });
   const key = (request: Request | string) =>
     typeof request === 'string' ? new URL(request, scope).href : request.url;
   function cache(name: string) {
@@ -34,7 +36,13 @@ function harness() {
         );
         for (const [url, response] of responses) values.set(url, response);
       },
-      match: async (request: Request | string) => values.get(key(request))?.clone(),
+      match: async (request: Request | string) => {
+        const original = values.get(key(request));
+        if (!original) return;
+        const response = original.clone();
+        Object.defineProperty(response, 'url', { value: original.url });
+        return response;
+      },
       put: async (request: Request | string, response: Response) => {
         values.set(key(request), response);
       },
@@ -103,6 +111,16 @@ test('activation preserves sibling-app caches and removes only its previous rele
   expect(worker.stores.has('other-portfolio-cache')).toBe(true);
   expect(worker.stores.has('kirsh-vault:https://portfolio.example/another/old-release')).toBe(true);
   expect(worker.stores.has(`kirsh-vault:${encodeURIComponent(scope)}:old-release`)).toBe(false);
+});
+
+test('cached worker scripts retain the bootstrap parameters of the requested URL', async () => {
+  const worker = harness();
+  await worker.lifecycle('install');
+  const requestUrl = `${scope}_next/static/app.js?params=bootstrap`;
+  const response = await worker.request(requestUrl);
+  // Fetch uses Response.url when present to set the resulting worker's location.
+  expect(new URL(response?.url || requestUrl).searchParams.get('params')).toBe('bootstrap');
+  expect(await response?.text()).toBe(`${scope}_next/static/app.js`);
 });
 
 test('a complete release supports cold offline routes, JS, HEAD probes and RSC payloads', async () => {

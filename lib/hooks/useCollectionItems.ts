@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { useDb } from '@/lib/context/DbContext';
-import { ItemCategory } from '@/lib/db';
+import { CollectionItem, ItemCategory, ItemChangedError, StaleCollectionError } from '@/lib/db';
 import { RatingFilter } from '@/lib/search';
 import { FormValues } from '@/types';
 
@@ -21,6 +21,8 @@ export function useCollectionItems(
   const [ratingFilter, setRating] = useState<RatingFilter | null>(null);
   const [categoryFilter, setCategory] = useState<ItemCategory | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
+  const [observedGeneration, setObservedGeneration] = useState<string | null>(null);
+  const [mutationConflict, setMutationConflict] = useState<string | null>(null);
   const result = useLiveQuery(
     async () => {
       try {
@@ -40,6 +42,17 @@ export function useCollectionItems(
     [db, page, pageSize, category, categoryFilter, searchQuery, ratingFilter, revision],
     null
   );
+  const generation = result?.data?.generation ?? '';
+  if (generation && generation !== observedGeneration) {
+    setObservedGeneration(generation);
+    if (observedGeneration !== null) {
+      setPage(1);
+      setQuery('');
+      setRating(null);
+      setCategory(null);
+      setExpandedItemId(null);
+    }
+  }
 
   const setSearchQuery = useCallback((query: string) => {
     setPage(1);
@@ -64,15 +77,23 @@ export function useCollectionItems(
       await operation();
       toast.success(`Item ${action} successfully`);
       return true;
-    } catch {
+    } catch (error) {
+      if (error instanceof StaleCollectionError || error instanceof ItemChangedError) {
+        setMutationConflict(error.message);
+        return false;
+      }
       toast.error(`Item could not be ${action}. Your changes have not been saved.`);
       return false;
     }
   }
 
   return {
+    mutationConflict,
+    clearMutationConflict: () => setMutationConflict(null),
+    generation,
     items: result?.data?.items ?? [],
     pagination: result?.data ?? {
+      generation: '',
       total: 0,
       collectionTotal: 0,
       page: 1,
@@ -91,9 +112,12 @@ export function useCollectionItems(
     setCategoryFilter,
     isSearching: !!searchQuery.trim(),
     isFiltering: !!ratingFilter || !!categoryFilter,
-    addItem: (data: FormValues) => mutate(() => db.addItem(data), 'added'),
-    updateItem: (id: number, data: FormValues) => mutate(() => db.updateItem(id, data), 'updated'),
-    deleteItem: (id: number) => mutate(() => db.deleteItem(id), 'deleted'),
+    addItem: (data: FormValues, expectedGeneration = generation) =>
+      mutate(() => db.addItem(data, expectedGeneration), 'added'),
+    updateItem: (item: CollectionItem, data: FormValues, expectedGeneration = generation) =>
+      mutate(() => db.updateItem(item.id, data, expectedGeneration, item.revision ?? 0), 'updated'),
+    deleteItem: (item: CollectionItem, expectedGeneration = generation) =>
+      mutate(() => db.deleteItem(item.id, expectedGeneration, item.revision ?? 0), 'deleted'),
     toggleExpandItem: (id: number) => setExpandedItemId((current) => (current === id ? null : id)),
     changePage: setPage,
     loadItems: () => setRevision((current) => current + 1),

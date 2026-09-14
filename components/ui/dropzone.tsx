@@ -6,10 +6,12 @@ import { useRef, useState } from 'react';
 import { Accept, FileRejection, useDropzone } from 'react-dropzone';
 
 import { Button } from '@/components/ui/button';
+import { IMAGE_ACCEPT, IMAGE_LIMITS } from '@/lib/image-policy';
 import { imageEntries, optimizeImage } from '@/lib/images';
 import { cn } from '@/lib/utils';
 
 type Props = {
+  disabled?: boolean;
   images: string[];
   onChange: (images: string[]) => void;
   onProcessingChange?: (processing: boolean) => void;
@@ -20,12 +22,13 @@ type Props = {
 };
 
 export function Dropzone({
+  disabled = false,
   images,
   onChange,
   onProcessingChange,
-  maxFiles = 5,
-  maxSize = 10 * 1024 * 1024,
-  accept = { 'image/jpeg': ['.jpg', '.jpeg'], 'image/png': ['.png'], 'image/webp': ['.webp'] },
+  maxFiles = IMAGE_LIMITS.perItem,
+  maxSize = IMAGE_LIMITS.fileBytes,
+  accept = IMAGE_ACCEPT,
   className,
 }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -33,7 +36,7 @@ export function Dropzone({
   const processing = useRef(false);
 
   async function onDrop(accepted: File[], rejected: FileRejection[]) {
-    if (processing.current) return;
+    if (disabled || processing.current) return;
     processing.current = true;
     setIsProcessing(true);
     onProcessingChange?.(true);
@@ -64,7 +67,7 @@ export function Dropzone({
 
   const hasImages = images.length > 0;
   const isAtLimit = images.length >= maxFiles;
-  const isDisabled = isProcessing || isAtLimit;
+  const isDisabled = disabled || isProcessing || isAtLimit;
   const { getRootProps, getInputProps, isDragActive, rootRef } = useDropzone({
     onDrop,
     maxSize,
@@ -145,7 +148,7 @@ export function Dropzone({
                 size="sm"
                 variant="ghost"
                 aria-label={`Remove image ${index + 1}`}
-                disabled={isProcessing}
+                disabled={disabled || isProcessing}
                 className="mt-1 h-8 w-full gap-1 rounded-md px-1 text-xs text-muted-foreground hover:text-destructive"
                 onClick={() => {
                   onChange(images.filter((_, current) => current !== index));

@@ -126,13 +126,13 @@ describe('CollectionItemComponent', () => {
     expect(defaultProps.onDelete).toHaveBeenCalledTimes(1);
   });
 
-  test('should open image viewer when an image is clicked', () => {
+  test('should open image viewer when an image is clicked', async () => {
     render(<CollectionItemComponent {...defaultProps} />);
 
     const imageContainer = screen.getByAltText('Test item').parentElement;
     fireEvent.click(imageContainer!);
 
-    const closeButton = screen.getByRole('button', { name: /close/i });
+    const closeButton = await screen.findByRole('button', { name: /close/i });
     expect(closeButton).toBeInTheDocument();
   });
 });

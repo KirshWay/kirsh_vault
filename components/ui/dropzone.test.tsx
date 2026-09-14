@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 
+import { pngFile } from '@/tests/helpers/image';
+
 import { Dropzone } from './dropzone';
 
 afterEach(() => {
@@ -18,10 +20,10 @@ function upload(files: File[], images: string[] = []) {
   return onChange;
 }
 
-function decodingSucceeds() {
+function decodingSucceeds(width = 1, height = 1) {
   vi.stubGlobal(
     'createImageBitmap',
-    vi.fn(async () => ({ width: 2400, height: 1200, close: vi.fn() }))
+    vi.fn(async () => ({ width, height, close: vi.fn() }))
   );
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
     drawImage: vi.fn(),
@@ -85,30 +87,21 @@ test('keyboard navigation follows the upload control into the image strip', asyn
 
 test('adding two files to four images never exceeds the five-image limit', async () => {
   decodingSucceeds();
-  const onChange = upload(
-    [
-      new File(['a'], 'a.png', { type: 'image/png' }),
-      new File(['b'], 'b.png', { type: 'image/png' }),
-    ],
-    ['1', '2', '3', '4']
-  );
+  const onChange = upload([pngFile(), pngFile()], ['1', '2', '3', '4']);
   await waitFor(() => expect(onChange).toHaveBeenCalled());
   expect(onChange.mock.lastCall?.[0]).toHaveLength(5);
 });
 
 test('valid files are retained when another file in the same selection is rejected', async () => {
   decodingSucceeds();
-  const onChange = upload([
-    new File(['a'], 'a.png', { type: 'image/png' }),
-    new File(['text'], 'a.txt', { type: 'text/plain' }),
-  ]);
+  const onChange = upload([pngFile(), new File(['text'], 'a.txt', { type: 'text/plain' })]);
   await waitFor(() => expect(onChange).toHaveBeenCalled());
   expect(onChange.mock.lastCall?.[0]).toHaveLength(1);
 });
 
 test('images are resized before they are stored', async () => {
-  decodingSucceeds();
-  const onChange = upload([new File(['large image'], 'a.png', { type: 'image/png' })]);
+  decodingSucceeds(2400, 1200);
+  const onChange = upload([pngFile(2400, 1200)]);
   await waitFor(() => expect(onChange).toHaveBeenCalled());
   expect(onChange.mock.lastCall?.[0]).toEqual(['data:image/webp;base64,b3B0aW1pemVk']);
   const canvas = vi.mocked(HTMLCanvasElement.prototype.getContext).mock.instances[0];

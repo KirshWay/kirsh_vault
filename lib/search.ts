@@ -10,7 +10,7 @@ export type RatingFilter =
 export type CategoryFilterType = ItemCategory | null;
 
 export type SearchOptions = {
-  searchFields?: Array<keyof CollectionItem>;
+  searchFields?: Array<keyof Omit<CollectionItem, 'images'>>;
   minScore?: number;
   limitResults?: number;
 };
@@ -21,8 +21,8 @@ export type ItemFilters = {
   ratingFilter?: RatingFilter | null;
 };
 
-export function filterItems(
-  items: CollectionItem[],
+export function filterItems<T extends Omit<CollectionItem, 'images'>>(
+  items: T[],
   filters: ItemFilters = {},
   options: SearchOptions = {}
 ) {

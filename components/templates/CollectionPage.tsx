@@ -1,37 +1,51 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
+import { BackupMenu } from '@/components/BackupMenu';
 import { EmptyState } from '@/components/EmptyState';
 import { SearchResults } from '@/components/SearchResults';
 import { Button } from '@/components/ui/button';
 import { FilterPanel } from '@/components/ui/FilterPanel';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { DeleteItemModal } from '@/components/ui/modal/DeleteItemModal';
 import { ItemFormModal } from '@/components/ui/modal/ItemFormModal';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { CATEGORY_CONFIG } from '@/lib/config/categories';
+import { BASE_PATH } from '@/lib/config/site.mjs';
 import { CollectionItem, ItemCategory } from '@/lib/db';
 import { DEFAULT_PAGE_SIZE, useCollectionItems } from '@/lib/hooks/useCollectionItems';
 import { FormValues } from '@/types';
 
 export function CollectionPage({ category = null }: { category?: ItemCategory | null }) {
+  const router = useRouter();
   const collection = useCollectionItems(1, DEFAULT_PAGE_SIZE, category);
   const { items, pagination, isLoading, error, searchQuery, isSearching, isFiltering } = collection;
   const config = category ? CATEGORY_CONFIG[category] : null;
   const [isOpen, setIsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null);
+  const [formGeneration, setFormGeneration] = useState('');
+  const [deletion, setDeletion] = useState<{ item: CollectionItem; generation: string } | null>(
+    null
+  );
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const itemTitle = config?.title ?? 'Item';
   const title = config?.pluralTitle ?? 'My Collection';
   const hasCollection = pagination.collectionTotal > 0;
 
   function openNewItem() {
+    collection.clearMutationConflict();
+    setFormGeneration(collection.generation);
     setEditingItem(null);
     setIsOpen(true);
   }
   function submit(data: FormValues) {
-    return editingItem ? collection.updateItem(editingItem.id, data) : collection.addItem(data);
+    return editingItem
+      ? collection.updateItem(editingItem, data, formGeneration)
+      : collection.addItem(data, formGeneration);
   }
 
   return (
@@ -42,13 +56,23 @@ export function CollectionPage({ category = null }: { category?: ItemCategory | 
       </header>
       <div className="flex flex-col sm:flex-row justify-between gap-3 mb-6">
         <SearchBar
+          key={collection.generation}
           onSearch={collection.setSearchQuery}
           placeholder={config ? `Search ${title.toLowerCase()}...` : 'Search in collection...'}
         />
-        <Button ref={addButtonRef} onClick={openNewItem}>
-          <Plus className="h-4 w-4" />
-          Add {itemTitle}
-        </Button>
+        <div className="flex shrink-0 justify-end gap-2">
+          <BackupMenu
+            onRestored={() => {
+              toast.success('Collection restored successfully');
+              // An absolute URL preserves the root slash needed by static RSC files offline.
+              if (category) router.push(new URL(`${BASE_PATH}/`, window.location.origin).href);
+            }}
+          />
+          <Button ref={addButtonRef} onClick={openNewItem} disabled={isLoading || !!error}>
+            <Plus className="h-4 w-4" />
+            Add {itemTitle}
+          </Button>
+        </div>
       </div>
       {(hasCollection || isFiltering) && (
         <div className="mb-4">
@@ -79,8 +103,15 @@ export function CollectionPage({ category = null }: { category?: ItemCategory | 
           searchQuery={searchQuery}
           resultsCount={pagination.total}
           totalCount={pagination.collectionTotal}
-          onItemDelete={collection.deleteItem}
+          onItemDelete={(id) => {
+            const item = items.find((entry) => entry.id === id);
+            if (!item) return;
+            collection.clearMutationConflict();
+            setDeletion({ item, generation: collection.generation });
+          }}
           onItemEdit={(item) => {
+            collection.clearMutationConflict();
+            setFormGeneration(collection.generation);
             setEditingItem(item);
             setIsOpen(true);
           }}
@@ -94,11 +125,24 @@ export function CollectionPage({ category = null }: { category?: ItemCategory | 
         />
       )}
       <ItemFormModal
+        conflict={collection.mutationConflict}
+        stale={isOpen && formGeneration !== collection.generation}
         isOpen={isOpen}
         onOpenChange={setIsOpen}
         onSubmit={submit}
         title={editingItem ? `Edit ${itemTitle}` : `Add ${itemTitle}`}
         defaultValues={editingItem ?? { category: category ?? 'other' }}
+        fallbackFocusRef={addButtonRef}
+      />
+      <DeleteItemModal
+        item={deletion?.item ?? null}
+        conflict={collection.mutationConflict}
+        onClose={() => setDeletion(null)}
+        onConfirm={() =>
+          deletion
+            ? collection.deleteItem(deletion.item, deletion.generation)
+            : Promise.resolve(false)
+        }
         fallbackFocusRef={addButtonRef}
       />
     </main>

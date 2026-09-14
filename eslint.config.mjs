@@ -3,6 +3,7 @@ import nextTypescript from 'eslint-config-next/typescript';
 import simpleImportSortPlugin from 'eslint-plugin-simple-import-sort';
 
 const eslintConfig = [
+  { ignores: ['test-results/**', 'playwright-report/**'] },
   ...nextVitals,
   ...nextTypescript,
   {

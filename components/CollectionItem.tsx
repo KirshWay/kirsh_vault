@@ -1,17 +1,22 @@
 'use client';
 
 import { ChevronDown, Image as ImageIcon, Pencil, Trash } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { ImageViewer } from '@/components/ui/image-viewer';
 import { StarRating } from '@/components/ui/StarRating';
 import { CATEGORIES } from '@/lib/constants';
 import { CollectionItem } from '@/lib/db';
 import { imageEntries } from '@/lib/images';
 import { cn } from '@/lib/utils';
+
+const ImageViewer = dynamic(
+  () => import('@/components/ui/image-viewer').then((module) => module.ImageViewer),
+  { ssr: false }
+);
 
 type Props = {
   item: CollectionItem;
@@ -50,7 +55,10 @@ export const CollectionItemComponent = ({
               type="button"
               aria-label={`View images for ${item.name}`}
               className="w-full h-48 relative overflow-hidden group cursor-pointer"
-              onClick={() => openImageViewer(0)}
+              onClick={(event) => {
+                event.currentTarget.focus();
+                openImageViewer(0);
+              }}
             >
               <Image
                 unoptimized
@@ -138,7 +146,10 @@ export const CollectionItemComponent = ({
                       aria-label={`View image ${index + 1} for ${item.name}`}
                       key={key}
                       className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden cursor-pointer ring-offset-background transition-shadow hover:ring-2 hover:ring-ring hover:ring-offset-2"
-                      onClick={() => openImageViewer(index)}
+                      onClick={(event) => {
+                        event.currentTarget.focus();
+                        openImageViewer(index);
+                      }}
                     >
                       <Image
                         unoptimized
@@ -165,7 +176,12 @@ export const CollectionItemComponent = ({
                 variant="destructive"
                 size="sm"
                 className="h-8 cursor-pointer"
-                onClick={onDelete}
+                onClick={(event) => {
+                  // Safari does not focus buttons on pointer clicks. Give the dialog
+                  // a consistent return target for both pointer and keyboard users.
+                  event.currentTarget.focus();
+                  onDelete();
+                }}
               >
                 <Trash className="h-3.5 w-3.5 mr-1" />
                 Delete
@@ -175,7 +191,7 @@ export const CollectionItemComponent = ({
         </Card>
       </div>
 
-      {hasImages && (
+      {hasImages && isViewerOpen && (
         <ImageViewer
           images={images}
           open={isViewerOpen}

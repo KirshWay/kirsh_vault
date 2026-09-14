@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { CategoryFilterType, RatingFilter } from '@/lib/hooks/useSearchItems';
+import { CategoryFilterType, RatingFilter } from '@/lib/search';
 
 import { FilterPanel } from './FilterPanel';
 
@@ -104,7 +104,8 @@ describe('FilterPanel component', () => {
     const filterButton = screen.getAllByText('Filters')[0];
     await user.click(filterButton);
 
-    mockRatingFilterChange({ type: 'preset', presetName: 'high' });
+    await user.click(screen.getByRole('menuitem', { name: 'Rating' }));
+    await user.keyboard('{ArrowRight}{ArrowDown}{Enter}');
 
     expect(mockRatingFilterChange).toHaveBeenCalledWith({
       type: 'preset',
@@ -130,12 +131,14 @@ describe('FilterPanel component', () => {
     const filterButton = screen.getAllByText('Filters')[0];
     await user.click(filterButton);
 
-    mockCategoryFilterChange('book');
+    await user.click(screen.getByRole('menuitem', { name: 'Category' }));
+    await user.keyboard('{ArrowRight}{ArrowDown}{Enter}');
 
     expect(mockCategoryFilterChange).toHaveBeenCalledWith('book');
   });
 
   test('should clear filters when clear button is clicked', async () => {
+    const user = userEvent.setup();
     const mockRatingFilterChange = vi.fn();
     const mockCategoryFilterChange = vi.fn();
 
@@ -150,14 +153,14 @@ describe('FilterPanel component', () => {
       />
     );
 
-    mockRatingFilterChange(null);
+    await user.click(screen.getByRole('button', { name: /Filters/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Clear all filters' }));
     expect(mockRatingFilterChange).toHaveBeenCalledWith(null);
 
-    mockCategoryFilterChange(null);
     expect(mockCategoryFilterChange).toHaveBeenCalledWith(null);
   });
 
-  test('should show correct active states in dropdown', async () => {
+  test('updates the active filter count when the selected filters change', async () => {
     const user = userEvent.setup();
 
     const { rerender } = render(

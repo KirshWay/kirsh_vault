@@ -1,16 +1,15 @@
-export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+import { IMAGE_ACCEPT, IMAGE_LIMITS } from './image-policy';
+import { decodeImage } from './image-validation';
+
 export const MAX_IMAGE_DIMENSION = 1600;
-const MAX_IMAGE_PIXELS = 40_000_000;
 const MAX_STORED_LENGTH = 2 * 1024 * 1024;
 
 /** Normalize orientation, strip metadata and bound stored dimensions and encoded size. */
 export async function optimizeImage(file: File): Promise<string> {
-  if (!IMAGE_TYPES.some((type) => type === file.type)) throw new Error('Unsupported image type');
-  const bitmap = await createImageBitmap(file);
+  if (!Object.hasOwn(IMAGE_ACCEPT, file.type)) throw new Error('Unsupported image type');
+  if (file.size > IMAGE_LIMITS.fileBytes) throw new Error('Image exceeds the 10 MB limit.');
+  const { bitmap } = await decodeImage(new Uint8Array(await file.arrayBuffer()), file.type);
   try {
-    if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > MAX_IMAGE_PIXELS) {
-      throw new Error('Image dimensions are too large');
-    }
     const ratio = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(bitmap.width * ratio));

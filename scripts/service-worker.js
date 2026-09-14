@@ -64,13 +64,13 @@ self.addEventListener('fetch', (event) => {
         // Never substitute HTML for a missing script or a Next.js navigation payload.
         return new Response('Offline resource unavailable', { status: 503 });
       }
-      return request.method === 'HEAD'
-        ? new Response(null, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: response.headers,
-          })
-        : response;
+      // A cached network response carries its canonical URL. Construct a response without
+      // that URL so worker.location retains request parameters used by the bundler bootstrap.
+      return new Response(request.method === 'HEAD' ? null : response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+      });
     })()
   );
 });
