@@ -1,11 +1,11 @@
 'use client';
 
 import { Star } from 'lucide-react';
-import { useState } from 'react';
+import { type ComponentProps, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-type StarRatingProps = {
+type StarRatingProps = Omit<ComponentProps<'div'>, 'onChange'> & {
   value: number;
   onChange?: (value: number) => void;
   maxValue?: number;
@@ -23,6 +23,7 @@ export function StarRating({
   showValue = true,
   className,
   readonly = false,
+  ...props
 }: StarRatingProps) {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
 
@@ -46,34 +47,49 @@ export function StarRating({
 
   const starsToShow = maxValue;
 
-  const activeValue = hoverValue !== null ? hoverValue : value;
+  const activeValue = hoverValue ?? value;
 
   return (
-    <div className={cn('flex items-center', className)} data-testid="star-rating">
+    <div
+      {...props}
+      className={cn('flex items-center', className)}
+      data-testid="star-rating"
+      role="group"
+      aria-label={readonly ? `Rating: ${value} out of ${maxValue}` : 'Rating'}
+    >
       <div className={cn('flex items-center', containerSizes[size])}>
         {[...Array(starsToShow)].map((_, index) => {
           const starValue = index + 1;
           const isFullStar = activeValue >= starValue;
 
-          return (
-            <div
-              key={index}
+          const star = (
+            <Star
               className={cn(
-                'relative cursor-pointer text-yellow-400',
-                readonly && 'cursor-default'
+                starSizes[size],
+                'transition-colors duration-150',
+                isFullStar ? 'fill-yellow-400' : 'stroke-yellow-400 fill-transparent'
               )}
+            />
+          );
+          if (readonly)
+            return (
+              <span key={starValue} aria-hidden="true" className="text-yellow-400">
+                {star}
+              </span>
+            );
+          return (
+            <button
+              key={starValue}
+              type="button"
+              aria-label={`Rate ${starValue} out of ${maxValue}`}
+              aria-pressed={value === starValue}
+              className="relative cursor-pointer text-yellow-400 rounded focus-visible:outline-2 focus-visible:outline-ring"
               onClick={() => handleStarClick(starValue)}
-              onMouseEnter={() => !readonly && setHoverValue(starValue)}
-              onMouseLeave={() => !readonly && setHoverValue(null)}
+              onMouseEnter={() => setHoverValue(starValue)}
+              onMouseLeave={() => setHoverValue(null)}
             >
-              <Star
-                className={cn(
-                  starSizes[size],
-                  'transition-colors duration-150',
-                  isFullStar ? 'fill-yellow-400' : 'stroke-yellow-400 fill-transparent'
-                )}
-              />
-            </div>
+              {star}
+            </button>
           );
         })}
       </div>
@@ -87,7 +103,7 @@ export function StarRating({
             size === 'lg' && 'text-base'
           )}
         >
-          {value}/10
+          {value}/{maxValue}
         </span>
       )}
     </div>

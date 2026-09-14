@@ -1,6 +1,6 @@
 'use client';
 
-import { Book, Bookmark, BookOpenCheck, Check, Filter, Star, X } from 'lucide-react';
+import { Bookmark, Check, Filter, Star, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 
@@ -14,20 +14,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CATEGORIES } from '@/lib/constants';
+import { CATEGORY_CONFIG } from '@/lib/config/categories';
+import { CATEGORIES, ITEM_CATEGORIES } from '@/lib/constants';
 import { ItemCategory } from '@/lib/db';
-import { CategoryFilterType, RatingFilter } from '@/lib/hooks/useSearchItems';
+import { CategoryFilterType, RatingFilter } from '@/lib/search';
 import { cn } from '@/lib/utils';
 
 type FilterPanelProps = {
-  category?: ItemCategory;
+  category?: ItemCategory | null;
   ratingFilter: RatingFilter | null;
   onRatingFilterChange: (filter: RatingFilter | null) => void;
   showCategoryFilter?: boolean;
@@ -146,44 +146,25 @@ export function FilterPanel({
 
                     <DropdownMenuSeparator />
 
-                    <DropdownMenuItem
-                      onClick={() => onCategoryFilterChange('book')}
-                      className="cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          categoryFilter === 'book' ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      <span>Books</span>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onClick={() => onCategoryFilterChange('movie')}
-                      className="cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          categoryFilter === 'movie' ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      <span>Movies</span>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onClick={() => onCategoryFilterChange('other')}
-                      className="cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          categoryFilter === 'other' ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      <span>Other</span>
-                    </DropdownMenuItem>
+                    {ITEM_CATEGORIES.map((value) => (
+                      <DropdownMenuItem
+                        key={value}
+                        onClick={() => onCategoryFilterChange(value)}
+                        className="cursor-pointer"
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            categoryFilter === value ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        <span>
+                          {value === 'other'
+                            ? CATEGORIES[value]
+                            : CATEGORY_CONFIG[value].pluralTitle}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
               </DropdownMenuSub>
@@ -319,12 +300,12 @@ export function FilterPanel({
               className="flex items-center gap-1.5 h-8 px-3 cursor-default"
             >
               <Bookmark className="h-3.5 w-3.5 text-blue-500" />
-              {CATEGORIES[categoryFilter] || categoryFilter}
+              {CATEGORIES[categoryFilter]}
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-5 w-5 p-0 ml-1 rounded-full cursor-pointer"
-                onClick={() => onCategoryFilterChange && onCategoryFilterChange(null)}
+                onClick={() => onCategoryFilterChange?.(null)}
               >
                 <X className="h-3 w-3" />
                 <span className="sr-only">Clear filter</span>

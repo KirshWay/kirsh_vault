@@ -9,6 +9,17 @@ export default defineConfig({
     setupFiles: ['./setup.ts'],
     include: ['**/*.{test,spec}.{ts,tsx}'],
     globals: true,
+    coverage: {
+      provider: 'v8',
+      include: [
+        'app/**/*.{ts,tsx}',
+        'components/**/*.{ts,tsx}',
+        'lib/**/*.{ts,tsx}',
+        'scripts/*.{js,mjs}',
+      ],
+      exclude: ['**/*.{test,spec}.{ts,tsx}'],
+      reporter: ['text', 'html'],
+    },
   },
   resolve: {
     alias: {

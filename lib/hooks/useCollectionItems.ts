@@ -1,127 +1,101 @@
-import { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useCallback, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { useDb } from '@/lib/context/DbContext';
-import { CollectionItem, PaginationResult } from '@/lib/db';
+import { ItemCategory } from '@/lib/db';
+import { RatingFilter } from '@/lib/search';
 import { FormValues } from '@/types';
 
 export const DEFAULT_PAGE_SIZE = 12;
 
-export const useCollectionItems = (initialPage = 1, pageSize = DEFAULT_PAGE_SIZE) => {
+export function useCollectionItems(
+  initialPage = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  category: ItemCategory | null = null
+) {
   const db = useDb();
-  const [items, setItems] = useState<CollectionItem[]>([]);
+  const [page, setPage] = useState(initialPage);
+  const [revision, setRevision] = useState(0);
+  const [searchQuery, setQuery] = useState('');
+  const [ratingFilter, setRating] = useState<RatingFilter | null>(null);
+  const [categoryFilter, setCategory] = useState<ItemCategory | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
-  const [pagination, setPagination] = useState<Omit<PaginationResult<CollectionItem>, 'items'>>({
-    total: 0,
-    page: initialPage,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const result = useLiveQuery(
+    async () => {
+      try {
+        const data = await db.getItemsPage(page, pageSize, {
+          category: category ?? categoryFilter,
+          searchQuery,
+          ratingFilter,
+        });
+        return { data, error: null };
+      } catch {
+        return {
+          data: null,
+          error: 'Unable to load your collection. Check browser storage and try again.',
+        };
+      }
+    },
+    [db, page, pageSize, category, categoryFilter, searchQuery, ratingFilter, revision],
+    null
+  );
 
-  const loadItems = async (page = pagination.page) => {
-    setIsLoading(true);
+  const setSearchQuery = useCallback((query: string) => {
+    setPage(1);
+    setQuery(query);
+  }, []);
+  const setRatingFilter = useCallback((filter: RatingFilter | null) => {
+    setPage(1);
+    setRating(filter);
+  }, []);
+  const setCategoryFilter = useCallback((filter: ItemCategory | null) => {
+    setPage(1);
+    setCategory(filter);
+  }, []);
+
+  // Deleting a last-page item must also update the requested page for future writes.
+  if (result?.data && page > Math.max(1, result.data.totalPages)) {
+    setPage(result.data.page);
+  }
+
+  async function mutate(operation: () => Promise<unknown>, action: string) {
     try {
-      const result = await db.getItemsPage(page, pageSize);
-      setItems(result.items);
-      setPagination({
-        total: result.total,
-        page: result.page,
-        totalPages: result.totalPages,
-        hasNext: result.hasNext,
-        hasPrev: result.hasPrev,
-      });
-    } finally {
-      setIsLoading(false);
+      await operation();
+      toast.success(`Item ${action} successfully`);
+      return true;
+    } catch {
+      toast.error(`Item could not be ${action}. Your changes have not been saved.`);
+      return false;
     }
-  };
-
-  useEffect(() => {
-    loadItems(initialPage);
-  }, [initialPage, pageSize]);
-
-  const changePage = async (newPage: number) => {
-    if (newPage === pagination.page) return;
-    await loadItems(newPage);
-  };
-
-  const addItem = async (data: FormValues) => {
-    const newItem = await db.addItem(data);
-
-    if (typeof newItem === 'number') {
-      const addedItem = await db.getItem(newItem);
-
-      if (addedItem && pagination.page === 1) {
-        setItems((prevItems) => [addedItem, ...prevItems].slice(0, pageSize));
-      } else {
-        await loadItems(pagination.page);
-      }
-    } else if (newItem !== false) {
-      await loadItems(pagination.page);
-    }
-
-    return newItem !== false;
-  };
-
-  const updateItem = async (id: number, data: FormValues) => {
-    const success = await db.updateItem(id, data);
-
-    if (success) {
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                name: data.name,
-                description: data.description,
-                category: data.category,
-                images: data.images || [],
-                rating: data.rating,
-              }
-            : item
-        )
-      );
-    }
-
-    return success;
-  };
-
-  const deleteItem = async (id: number) => {
-    const success = await db.deleteItem(id);
-    if (success) {
-      setItems((prev) => prev.filter((item) => item.id !== id));
-
-      if (items.length === 1 && pagination.hasPrev) {
-        await loadItems(pagination.page - 1);
-      } else if (items.length <= pageSize && pagination.total > items.length) {
-        await loadItems(pagination.page);
-      } else {
-        setPagination((prev) => ({
-          ...prev,
-          total: prev.total - 1,
-          totalPages: Math.ceil((prev.total - 1) / pageSize),
-          hasNext: prev.page < Math.ceil((prev.total - 1) / pageSize),
-        }));
-      }
-    }
-
-    return success;
-  };
-
-  const toggleExpandItem = (id: number) => {
-    setExpandedItemId(expandedItemId === id ? null : id);
-  };
+  }
 
   return {
-    items,
-    pagination,
-    isLoading,
+    items: result?.data?.items ?? [],
+    pagination: result?.data ?? {
+      total: 0,
+      collectionTotal: 0,
+      page: 1,
+      totalPages: 0,
+      hasNext: false,
+      hasPrev: false,
+    },
+    isLoading: !result,
+    error: result?.error ?? null,
     expandedItemId,
-    addItem,
-    updateItem,
-    deleteItem,
-    toggleExpandItem,
-    changePage,
-    loadItems,
+    searchQuery,
+    setSearchQuery,
+    ratingFilter,
+    setRatingFilter,
+    categoryFilter,
+    setCategoryFilter,
+    isSearching: !!searchQuery.trim(),
+    isFiltering: !!ratingFilter || !!categoryFilter,
+    addItem: (data: FormValues) => mutate(() => db.addItem(data), 'added'),
+    updateItem: (id: number, data: FormValues) => mutate(() => db.updateItem(id, data), 'updated'),
+    deleteItem: (id: number) => mutate(() => db.deleteItem(id), 'deleted'),
+    toggleExpandItem: (id: number) => setExpandedItemId((current) => (current === id ? null : id)),
+    changePage: setPage,
+    loadItems: () => setRevision((current) => current + 1),
   };
-};
+}

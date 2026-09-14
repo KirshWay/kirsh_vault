@@ -2,11 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { CategoryFilterType, RatingFilter } from '@/lib/hooks/useSearchItems';
+
 import { FilterPanel } from './FilterPanel';
 
 describe('FilterPanel component', () => {
-  let ratingFilterChangeMock: ReturnType<typeof vi.fn>;
-  let categoryFilterChangeMock: ReturnType<typeof vi.fn>;
+  let ratingFilterChangeMock: ReturnType<typeof vi.fn<(filter: RatingFilter | null) => void>>;
+  let categoryFilterChangeMock: ReturnType<typeof vi.fn<(category: CategoryFilterType) => void>>;
 
   beforeEach(() => {
     ratingFilterChangeMock = vi.fn();

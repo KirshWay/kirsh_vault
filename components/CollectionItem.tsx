@@ -2,6 +2,7 @@
 
 import { ChevronDown, Image as ImageIcon, Pencil, Trash } from 'lucide-react';
 import { motion } from 'motion/react';
+import Image from 'next/image';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { ImageViewer } from '@/components/ui/image-viewer';
 import { StarRating } from '@/components/ui/StarRating';
 import { CATEGORIES } from '@/lib/constants';
 import { CollectionItem } from '@/lib/db';
+import { imageEntries } from '@/lib/images';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -30,7 +32,7 @@ export const CollectionItemComponent = ({
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const images = item.images || [];
+  const images = item.images ?? [];
   const hasImages = images.length > 0;
   const mainImage = hasImages ? images[0] : null;
   const additionalImagesCount = hasImages ? images.length - 1 : 0;
@@ -51,11 +53,20 @@ export const CollectionItemComponent = ({
       >
         <Card className="h-full flex flex-col overflow-hidden">
           {mainImage ? (
-            <div
+            <button
+              type="button"
+              aria-label={`View images for ${item.name}`}
               className="w-full h-48 relative overflow-hidden group cursor-pointer"
               onClick={() => openImageViewer(0)}
             >
-              <img src={mainImage} alt={item.name} className="w-full h-full object-cover" />
+              <Image
+                unoptimized
+                src={mainImage}
+                alt={item.name}
+                fill
+                sizes="(max-width: 640px) 100vw, 33vw"
+                className="object-cover"
+              />
 
               {additionalImagesCount > 0 && (
                 <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 text-white text-xs rounded-full flex items-center gap-1">
@@ -68,7 +79,7 @@ export const CollectionItemComponent = ({
                   View {images.length > 1 ? 'images' : 'image'}
                 </span>
               </div>
-            </div>
+            </button>
           ) : (
             <div className="w-full h-40 bg-muted flex items-center justify-center">
               <ImageIcon
@@ -84,13 +95,13 @@ export const CollectionItemComponent = ({
                 <h3 className="text-lg font-semibold line-clamp-2">{item.name}</h3>
                 <div className="flex items-center mt-1">
                   <span className="text-xs px-2 py-1 bg-secondary rounded-full">
-                    {CATEGORIES[item.category] || item.category}
+                    {CATEGORIES[item.category]}
                   </span>
                   <span className="text-xs text-muted-foreground ml-2">
                     {new Date(item.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                {item.rating !== undefined && item.rating > 0 && item.category !== 'other' && (
+                {!!item.rating && item.rating > 0 && item.category !== 'other' && (
                   <div className="mt-2">
                     <StarRating value={item.rating} size="sm" readonly />
                   </div>
@@ -100,6 +111,9 @@ export const CollectionItemComponent = ({
                 variant="ghost"
                 size="sm"
                 className="p-0 h-8 w-8 cursor-pointer"
+                aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${item.name}`}
+                aria-expanded={isExpanded}
+                aria-controls={`item-details-${item.id}`}
                 onClick={onExpand}
               >
                 <ChevronDown
@@ -113,6 +127,9 @@ export const CollectionItemComponent = ({
           </CardHeader>
 
           <CardContent
+            id={`item-details-${item.id}`}
+            inert={!isExpanded}
+            aria-hidden={!isExpanded}
             className={cn(
               'transition-all duration-300 overflow-hidden',
               isExpanded ? 'max-h-96' : 'max-h-0 p-0'
@@ -123,18 +140,23 @@ export const CollectionItemComponent = ({
             {images.length > 1 && (
               <div className="mt-3 overflow-x-auto pb-2">
                 <div className="flex gap-2 flex-nowrap min-w-0">
-                  {images.map((image, index) => (
-                    <div
-                      key={index}
+                  {imageEntries(images).map(({ src: image, key }, index) => (
+                    <button
+                      type="button"
+                      aria-label={`View image ${index + 1} for ${item.name}`}
+                      key={key}
                       className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden cursor-pointer ring-offset-background transition-all hover:ring-2 hover:ring-ring hover:ring-offset-2"
                       onClick={() => openImageViewer(index)}
                     >
-                      <img
+                      <Image
+                        unoptimized
+                        width={64}
+                        height={64}
                         src={image}
                         alt={`${item.name} thumbnail ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>

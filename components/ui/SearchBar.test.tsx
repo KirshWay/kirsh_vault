@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { SearchBar } from './SearchBar';
 
 describe('SearchBar component', () => {
-  let onSearchMock: ReturnType<typeof vi.fn>;
+  let onSearchMock: ReturnType<typeof vi.fn<(value: string) => void>>;
 
   beforeEach(() => {
     onSearchMock = vi.fn();

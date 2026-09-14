@@ -1,9 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Dropzone } from '@/components/ui/dropzone';
@@ -25,76 +24,32 @@ import {
 } from '@/components/ui/select';
 import { StarRating } from '@/components/ui/StarRating';
 import { Textarea } from '@/components/ui/textarea';
+import { CATEGORIES, ITEM_CATEGORIES } from '@/lib/constants';
+import { itemSchema } from '@/lib/item-schema';
 import { DefaultValues, FormValues } from '@/types';
 
-const formSchema = z.object({
-  name: z.string().min(1, { error: 'Name is required' }),
-  description: z.string().optional(),
-  category: z.enum(['book', 'movie', 'other'], {
-    error: (issue) => (issue.input === undefined ? 'Please select a category' : 'Invalid category'),
-  }),
-  images: z.array(z.string()).optional(),
-  rating: z.number().min(0).max(10).optional(),
-});
-
 type Props = {
-  defaultValues?: DefaultValues;
-  onSubmit: (data: FormValues) => void;
+  defaultValues?: DefaultValues | null;
+  onSubmit: (data: FormValues) => Promise<unknown>;
   onCancel: () => void;
 };
 
 export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
-  const [images, setImages] = useState<string[]>(defaultValues?.images || []);
-  const [rating, setRating] = useState<number>(defaultValues?.rating || 0);
-  const [currentCategory, setCurrentCategory] = useState<string>(
-    defaultValues?.category || 'other'
-  );
-
+  const [processingImages, setProcessingImages] = useState(false);
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(itemSchema),
     defaultValues: {
-      name: defaultValues?.name || '',
-      description: defaultValues?.description || '',
-      category: defaultValues?.category || 'other',
-      images: defaultValues?.images || [],
-      rating: defaultValues?.rating || 0,
+      name: defaultValues?.name ?? '',
+      description: defaultValues?.description ?? '',
+      category: defaultValues?.category ?? 'other',
+      images: defaultValues?.images ?? [],
+      rating: defaultValues?.rating ?? 0,
     },
   });
 
-  useEffect(() => {
-    form.setValue('images', images);
-  }, [images, form]);
-
-  useEffect(() => {
-    form.setValue('rating', rating);
-  }, [rating, form]);
-
-  const handleImagesChange = (newImages: string[]) => {
-    setImages(newImages);
-  };
-
-  const handleRatingChange = (newRating: number) => {
-    setRating(newRating);
-  };
-
-  const handleCategoryChange = (category: string) => {
-    setCurrentCategory(category);
-
-    if (category === 'other') {
-      setRating(0);
-    }
-
-    form.setValue('category', category as 'book' | 'movie' | 'other');
-  };
-
-  const handleSubmit = (data: FormValues) => {
-    const formData = {
-      ...data,
-      images,
-      rating: currentCategory === 'other' ? 0 : rating,
-    };
-
-    onSubmit(formData);
+  const currentCategory = useWatch({ control: form.control, name: 'category' });
+  const handleSubmit = async (data: FormValues) => {
+    await onSubmit({ ...data, rating: data.category === 'other' ? 0 : data.rating });
   };
 
   return (
@@ -122,16 +77,18 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={handleCategoryChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="book">Book</SelectItem>
-                      <SelectItem value="movie">Movie</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {ITEM_CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {CATEGORIES[category]}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -161,11 +118,11 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
               <FormField
                 control={form.control}
                 name="rating"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Rating</FormLabel>
                     <FormControl>
-                      <StarRating value={rating} onChange={handleRatingChange} size="md" />
+                      <StarRating value={field.value ?? 0} onChange={field.onChange} size="md" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -175,29 +132,46 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
           </div>
 
           <div className="md:col-span-1">
-            <FormItem>
-              <FormLabel>Images</FormLabel>
-              <FormControl>
-                <Dropzone
-                  images={images}
-                  onChange={handleImagesChange}
-                  maxFiles={5}
-                  maxSize={10 * 1024 * 1024}
-                  accept={{
-                    'image/*': ['.jpeg', '.jpg', '.png', '.webp'],
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+            <FormField
+              control={form.control}
+              name="images"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Images</FormLabel>
+                  <Dropzone
+                    onProcessingChange={setProcessingImages}
+                    images={field.value ?? []}
+                    onChange={field.onChange}
+                    maxFiles={5}
+                    maxSize={10 * 1024 * 1024}
+                    accept={{
+                      'image/jpeg': ['.jpeg', '.jpg'],
+                      'image/png': ['.png'],
+                      'image/webp': ['.webp'],
+                    }}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
 
         <div className="flex justify-end space-x-2 pt-2">
-          <Button type="button" variant="outline" className="cursor-pointer" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            className="cursor-pointer"
+            onClick={onCancel}
+            disabled={form.formState.isSubmitting || processingImages}
+          >
             Cancel
           </Button>
-          <Button type="submit" className="cursor-pointer">
+          <Button
+            type="submit"
+            className="cursor-pointer"
+            disabled={form.formState.isSubmitting || processingImages}
+          >
             {defaultValues?.name ? 'Update' : 'Add'} Item
           </Button>
         </div>

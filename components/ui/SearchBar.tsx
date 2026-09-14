@@ -63,6 +63,7 @@ export function SearchBar({
           type="text"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
+          aria-label={placeholder}
           placeholder={placeholder}
           className={cn(
             'w-full pl-9 pr-9 transition-all focus-visible:ring-primary',
@@ -77,6 +78,7 @@ export function SearchBar({
             variant="ghost"
             size="sm"
             className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 cursor-pointer"
+            aria-label="Clear search"
             onClick={handleClear}
             type="button"
           >

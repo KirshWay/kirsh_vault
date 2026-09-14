@@ -14,9 +14,9 @@ vi.mock('./CollectionItem', () => ({
 describe('SearchResults component', () => {
   let testItems: CollectionItem[];
   let mockHandlers: {
-    onItemDelete: ReturnType<typeof vi.fn>;
-    onItemEdit: ReturnType<typeof vi.fn>;
-    onItemExpand: ReturnType<typeof vi.fn>;
+    onItemDelete: ReturnType<typeof vi.fn<(id: number) => void>>;
+    onItemEdit: ReturnType<typeof vi.fn<(item: CollectionItem) => void>>;
+    onItemExpand: ReturnType<typeof vi.fn<(id: number) => void>>;
   };
 
   beforeEach(() => {
@@ -103,7 +103,7 @@ describe('SearchResults component', () => {
   });
 
   test('should pass correct props to CollectionItemComponent', () => {
-    const { container } = render(
+    render(
       <SearchResults
         items={testItems}
         isSearching={false}

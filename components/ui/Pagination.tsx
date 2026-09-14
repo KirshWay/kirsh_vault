@@ -71,11 +71,11 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
-      {getPageNumbers().map((page, i) => {
+      {getPageNumbers().map((page) => {
         if (page === 'ellipsis-start' || page === 'ellipsis-end') {
           return (
             <div
-              key={`ellipsis-${i}`}
+              key={page}
               className="flex items-center justify-center h-8 w-8"
               aria-label="Ellipsis"
             >
@@ -92,7 +92,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
             className="h-8 w-8 p-0 cursor-pointer"
             onClick={() => onPageChange(Number(page))}
             aria-label={`Go to page ${page}`}
-            aria-current={currentPage === page ? 'page' : undefined}
+            aria-current={currentPage === page ? 'page' : false}
           >
             {page}
           </Button>

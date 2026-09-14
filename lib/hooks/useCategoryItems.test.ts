@@ -1,175 +1,80 @@
-import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import 'fake-indexeddb/auto';
 
-import { CollectionItem, PaginationResult } from '@/lib/db';
-import { FormValues } from '@/types';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { createElement, type ReactNode } from 'react';
+import { afterEach, beforeEach, expect, test } from 'vitest';
+
+import { DbProvider } from '@/lib/context/DbContext';
+import { db } from '@/lib/db';
 
 import { useCategoryItems } from './useCategoryItems';
-import { DEFAULT_PAGE_SIZE } from './useCollectionItems';
 
-vi.mock('@/lib/context/DbContext', () => ({
-  useDb: () => ({
-    getItemsByCategory: vi.fn().mockImplementation(async (category) => {
-      if (category === 'book') {
-        return mockBooks;
-      } else if (category === 'movie') {
-        return mockMovies;
-      }
-      return [];
-    }),
-    getItemsByCategoryPage: vi.fn().mockImplementation(async (category, page, limit) => {
-      let items: CollectionItem[] = [];
+const wrapper = ({ children }: { children: ReactNode }) =>
+  createElement(DbProvider, null, children);
+beforeEach(async () => {
+  await db.delete();
+  await db.open();
+  await db.items.bulkAdd([
+    { id: 1, name: 'First book', category: 'book', createdAt: new Date('2023-01-01') },
+    { id: 2, name: 'Second book', category: 'book', createdAt: new Date('2023-01-02') },
+    { id: 3, name: 'Movie', category: 'movie', createdAt: new Date('2023-01-03') },
+  ]);
+});
+afterEach(() => db.close());
 
-      if (category === 'book') {
-        items = mockBooks;
-      } else if (category === 'movie') {
-        items = mockMovies;
-      }
+test('loads only its category in reverse chronological order', async () => {
+  const { result } = renderHook(() => useCategoryItems('book'), { wrapper });
+  await waitFor(() => expect(result.current.items.map((item) => item.id)).toEqual([2, 1]));
+  expect(result.current.pagination.total).toBe(2);
+});
 
-      const total = items.length;
-      const startIndex = (page - 1) * limit;
-      const endIndex = Math.min(startIndex + limit, total);
-      const pageItems = items.slice(startIndex, endIndex);
-
-      const result: PaginationResult<CollectionItem> = {
-        items: pageItems,
-        total,
-        page,
-        totalPages: Math.ceil(total / limit),
-        hasNext: endIndex < total,
-        hasPrev: page > 1,
-      };
-
-      return result;
-    }),
-    addItem: vi.fn().mockImplementation(async () => {
-      return 999;
-    }),
-    updateItem: vi.fn().mockResolvedValue(true),
-    deleteItem: vi.fn().mockResolvedValue(true),
-    isLoading: false,
-  }),
-}));
-
-let mockBooks: CollectionItem[];
-let mockMovies: CollectionItem[];
-
-describe('useCategoryItems hook', () => {
-  beforeEach(() => {
-    mockBooks = [
-      {
-        id: 1,
-        name: 'War and Peace',
-        description: "Tolstoy's epic novel",
-        category: 'book',
-        rating: 9,
-        createdAt: new Date('2023-01-01'),
-      },
-      {
-        id: 2,
-        name: 'Master and Margarita',
-        description: "Mikhail Bulgakov's novel",
-        category: 'book',
-        rating: 10,
-        createdAt: new Date('2023-01-02'),
-      },
-    ];
-
-    mockMovies = [
-      {
-        id: 3,
-        name: 'Interstellar',
-        description: 'Space sci-fi movie',
-        category: 'movie',
-        rating: 8,
-        createdAt: new Date('2023-01-03'),
-      },
-    ];
-
-    vi.clearAllMocks();
+test('adding and editing records updates the observable query', async () => {
+  const { result } = renderHook(() => useCategoryItems('book'), { wrapper });
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  await act(async () => {
+    expect(await result.current.addItem({ name: 'New book', category: 'book' })).toBe(true);
   });
-
-  test('should load items of selected category on first rendering', async () => {
-    const { result } = renderHook(() => useCategoryItems('book'));
-
-    expect(result.current.items).toEqual([]);
-
-    await act(async () => {
-      await result.current.loadItems();
-    });
-
-    expect(result.current.items).toEqual(mockBooks);
-    expect(result.current.pagination.total).toBe(mockBooks.length);
-    expect(result.current.pagination.totalPages).toBe(
-      Math.ceil(mockBooks.length / DEFAULT_PAGE_SIZE)
-    );
-    expect(result.current.isLoading).toBe(false);
+  await waitFor(() => expect(result.current.pagination.total).toBe(3));
+  await act(async () => {
+    expect(await result.current.updateItem(1, { name: 'Edited', category: 'book' })).toBe(true);
   });
+  await waitFor(() =>
+    expect(result.current.items.find((item) => item.id === 1)?.name).toBe('Edited')
+  );
+});
 
-  test('should add a new item to the category', async () => {
-    const { result } = renderHook(() => useCategoryItems('book'));
-
-    const newItem: FormValues = {
-      name: 'New Book',
-      description: 'New book description',
-      category: 'book',
-    };
-
-    let success;
-    await act(async () => {
-      success = await result.current.addItem(newItem);
-    });
-
-    expect(success).toBe(true);
+test('deleting the final item on a page returns to the preceding page', async () => {
+  const { result } = renderHook(() => useCategoryItems('book', 1, 1), { wrapper });
+  await waitFor(() => expect(result.current.items[0]?.id).toBe(2));
+  act(() => result.current.changePage(2));
+  await waitFor(() => expect(result.current.items[0]?.id).toBe(1));
+  await act(async () => {
+    await result.current.deleteItem(1);
   });
+  await waitFor(() => expect(result.current.pagination.page).toBe(1));
+  expect(result.current.items[0]?.id).toBe(2);
+});
 
-  test('should update an existing item', async () => {
-    const { result } = renderHook(() => useCategoryItems('book'));
-
-    const updates: FormValues = {
-      name: 'Updated name',
-      description: 'Updated description',
-      category: 'book',
-      rating: 10,
-    };
-
-    let success;
-    await act(async () => {
-      success = await result.current.updateItem(1, updates);
-    });
-
-    expect(success).toBe(true);
+test('external database writes refresh an already mounted collection', async () => {
+  const { result } = renderHook(() => useCategoryItems('book'), { wrapper });
+  await waitFor(() => expect(result.current.items).toHaveLength(2));
+  await act(async () => {
+    await db.addItem({ name: 'External write', category: 'book' });
   });
+  await waitFor(() => expect(result.current.items[0]?.name).toBe('External write'));
+});
 
-  test('should delete an item and update the list', async () => {
-    const { result } = renderHook(() => useCategoryItems('book'));
-
-    await act(async () => {
-      await result.current.loadItems();
-    });
-
-    let success;
-    await act(async () => {
-      success = await result.current.deleteItem(1);
-    });
-
-    expect(success).toBe(true);
+test('adding after a last-page deletion keeps the user on the clamped page', async () => {
+  const { result } = renderHook(() => useCategoryItems('book', 2, 1), { wrapper });
+  await waitFor(() => expect(result.current.pagination.page).toBe(2));
+  await act(async () => {
+    await result.current.deleteItem(1);
   });
-
-  test('should change page', async () => {
-    const { result } = renderHook(() => useCategoryItems('book', 1, 1));
-
-    await act(async () => {
-      await result.current.loadItems();
-    });
-
-    expect(result.current.pagination.page).toBe(1);
-    expect(result.current.items.length).toBe(1);
-
-    await act(async () => {
-      await result.current.changePage(2);
-    });
-
-    expect(result.current.pagination.page).toBe(2);
+  await waitFor(() => expect(result.current.pagination.page).toBe(1));
+  await act(async () => {
+    await result.current.addItem({ name: 'Newest', category: 'book' });
   });
+  await waitFor(() => expect(result.current.pagination.total).toBe(2));
+  expect(result.current.pagination.page).toBe(1);
+  expect(result.current.items[0]?.name).toBe('Newest');
 });

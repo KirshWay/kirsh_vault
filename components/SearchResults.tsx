@@ -10,6 +10,7 @@ import { CollectionItem } from '@/lib/db';
 type Props = {
   items: CollectionItem[];
   isSearching: boolean;
+  isFiltering?: boolean;
   searchQuery: string;
   resultsCount: number;
   totalCount: number;
@@ -27,6 +28,7 @@ type Props = {
 export const SearchResults = ({
   items,
   isSearching,
+  isFiltering = false,
   searchQuery,
   resultsCount,
   totalCount,
@@ -46,7 +48,7 @@ export const SearchResults = ({
     },
   };
 
-  if (isSearching && items.length === 0) {
+  if ((isSearching || isFiltering) && items.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -55,7 +57,11 @@ export const SearchResults = ({
         transition={{ duration: 0.2 }}
         className="my-8"
       >
-        <EmptyState message={`Nothing found for "${searchQuery}"`} />
+        <EmptyState
+          message={
+            isSearching ? `Nothing found for "${searchQuery}"` : 'No items match these filters'
+          }
+        />
       </motion.div>
     );
   }
@@ -83,10 +89,10 @@ export const SearchResults = ({
             <CollectionItemComponent
               key={item.id}
               item={item}
-              onDelete={() => item.id !== undefined && onItemDelete(item.id)}
+              onDelete={() => onItemDelete(item.id)}
               onEdit={() => onItemEdit(item)}
               isExpanded={expandedItemId === item.id}
-              onExpand={() => item.id !== undefined && onItemExpand(item.id)}
+              onExpand={() => onItemExpand(item.id)}
             />
           ))}
         </AnimatePresence>

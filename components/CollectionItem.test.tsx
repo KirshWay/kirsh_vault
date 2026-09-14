@@ -103,7 +103,7 @@ describe('CollectionItemComponent', () => {
   test('should call onExpand when the expand button is clicked', () => {
     render(<CollectionItemComponent {...defaultProps} />);
 
-    const expandButton = screen.getByRole('button', { name: '' });
+    const expandButton = screen.getByRole('button', { name: 'Expand Test item' });
     fireEvent.click(expandButton);
 
     expect(defaultProps.onExpand).toHaveBeenCalledTimes(1);
@@ -136,4 +136,30 @@ describe('CollectionItemComponent', () => {
     const closeButton = screen.getByRole('button', { name: /close/i });
     expect(closeButton).toBeInTheDocument();
   });
+});
+
+test('image and details controls have accessible names and collapsed content is not interactive', () => {
+  render(
+    <CollectionItemComponent
+      item={{
+        id: 99,
+        name: 'Keyboard item',
+        category: 'book',
+        createdAt: new Date(),
+        images: ['/image.png', '/second.png'],
+      }}
+      onDelete={() => {}}
+      onEdit={() => {}}
+      onExpand={() => {}}
+      isExpanded={false}
+    />
+  );
+  expect(screen.getByRole('button', { name: 'View images for Keyboard item' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Expand Keyboard item' })).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  expect(
+    screen.queryByRole('button', { name: 'View image 2 for Keyboard item' })
+  ).not.toBeInTheDocument();
 });

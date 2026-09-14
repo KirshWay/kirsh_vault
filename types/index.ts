@@ -1,17 +1,6 @@
-import { ItemCategory } from '@/lib/db';
+import type { z } from 'zod';
 
-export type FormValues = {
-  name: string;
-  description?: string;
-  category: ItemCategory;
-  images?: string[];
-  rating?: number;
-};
+import type { itemSchema } from '@/lib/item-schema';
 
-export type DefaultValues = Partial<{
-  name: string;
-  description: string;
-  category: ItemCategory;
-  images: string[];
-  rating: number;
-}>;
+export type FormValues = z.infer<typeof itemSchema>;
+export type DefaultValues = Partial<FormValues>;

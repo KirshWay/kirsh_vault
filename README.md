@@ -1,140 +1,90 @@
 # Kirsh Vault
 
-A collection management system with offline storage capabilities, built with modern web technologies.
+A personal collection tracker for books, movies and other items. Built with Next.js, React and TypeScript, with data stored locally in the browser.
 
-🚀 **Live Demo**: [Application](https://kirshway.github.io/kirsh_vault/)
+**[Open the app](https://kirshway.github.io/kirsh_vault/)**
 
-## Features
+## What it does
 
-- **Progressive Web App (PWA)**: Install on any device and use offline
-- **Offline Support**: Store your collection items locally using IndexedDB
-- **Responsive Design**: Works on mobile, tablet, and desktop
-- **Animations**: Smooth transitions and interactions
-- **Modern UI**: Clean and intuitive interface
-- **Pagination**: Efficient browsing through large collections
-- **Search & Filtering**: Find items quickly by name, category, or rating
-- **Category Management**: Organize items by books, movies, games, and more
-- **Comprehensive Testing**: Robust test coverage for components and functionality
+- Create, edit and delete entries with descriptions and up to five images.
+- Rate books and movies on a 0–10 scale; move entries between categories.
+- Search names and descriptions across the entire collection, combine category and rating filters, and browse matching results in pages of 12.
+- Use the app offline after its first successful online installation. Installation as a standalone PWA depends on browser support.
+- Navigate with a keyboard, zoom the page and use the system's reduced-motion preference.
 
-## Technology Stack
+## Run locally
 
-- **Framework**: [Next.js](https://nextjs.org/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Database**: [Dexie.js](https://dexie.org/) (IndexedDB wrapper)
-- **UI Components**: [shadcn/ui](https://ui.shadcn.com/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Animations**: [Motion](https://motion.dev/)
-- **Forms**: [React Hook Form](https://react-hook-form.com/)
-- **Notifications**: [React Hot Toast](https://react-hot-toast.com/)
-- **PWA**: Service Worker, Web App Manifest
-- **Testing**: [Vitest](https://vitest.dev/) and [Testing Library](https://testing-library.com/)
-- **Runtime**: [Bun](https://bun.sh/) for fast development and testing
+Use **Node.js 24.17.0** and **Bun 1.4.2**, matching CI and the `packageManager` field. Bun installs dependencies and runs package scripts; Next.js and Vitest execute with Node.js.
 
-## Getting Started
-
-### Development
-
-First, run the development server:
-
-```bash
-# Install dependencies
-bun install
-
-# Start development server
+```sh
+bun install --frozen-lockfile
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the local address printed by Next.js in the terminal. The service worker is disabled in development so cached production assets cannot interfere with hot reload.
 
-### Testing
+## Build for GitHub Pages
 
-Run the tests with:
-
-```bash
-# Run tests
-bun run test
-
-# Run tests with coverage
-bun run test:coverage
-
-# Run tests in watch mode
-bun run test:watch
-```
-
-### Building for Production
-
-```bash
-# Build the application
+```sh
 bun run build
-
-# Start production server
-bun run start
 ```
 
-## Application Features
+The build generates static files in `out/`, including the offline worker. GitHub Actions publishes this directory to GitHub Pages on pushes to `main`; no application server is required on the host. See the [Next.js static-export guide](https://nextjs.org/docs/app/guides/static-exports) and [GitHub Pages documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
 
-### Main Collection View
+## Check changes
 
-- View all your collection items with pagination
-- Search and filter by various criteria
-- Add, edit, or delete items
+```sh
+bun run lint
+bun run typecheck
+bun run test
+bun run test:coverage
+bun audit
+bun run build
+```
 
-### Category Pages
+`bun run test:watch` starts watch mode. Coverage is collected with Vitest's V8 provider and written to `coverage/`; it includes application files that have no tests, rather than reporting only exercised files.
 
-- Browse items by specific categories
-- Filtered views for books, movies, games, etc.
-- Category-specific display options
+Regression tests cover real Dexie queries with an isolated in-memory IndexedDB implementation, schema migration, search before pagination, category moves, storage failures, duplicate submissions, image processing, keyboard interactions and service-worker cache isolation. Worker tests use browser API substitutes; verify installation and updates in a real browser before releasing changes to offline behavior.
 
-### Item Management
+Offline behavior must be checked against a production export: verify direct category loads without a network connection and activation of a downloaded update after all old app tabs close. A local static server used for this check must serve the export at `/kirsh_vault/`, matching the deployed site.
 
-- Create detailed entries with descriptions and ratings
-- Expand items to see full details
-- Quick edit and delete functionality
+## Architecture
 
-### Progressive Web App
+| Area                                      | Responsibility                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| `app/`                                    | Static routes, metadata and the application shell                  |
+| `components/templates/CollectionPage.tsx` | Shared collection screen for Home and category pages               |
+| `lib/hooks/useCollectionItems.ts`         | Reactive data queries, filtering, pagination and mutation feedback |
+| `lib/db.ts`                               | IndexedDB schema, migration and transactional queries              |
+| `lib/search.ts`                           | Search ranking and rating/category predicates                      |
+| `lib/item-schema.ts`                      | Form validation and inferred data types                            |
+| `lib/images.ts`                           | Image resizing and normalization before storage                    |
+| `components/ui/`                          | Accessible controls built with Radix UI and Tailwind CSS           |
+| `scripts/build-service-worker.mjs`        | Release manifest and content-versioned offline worker              |
+| `scripts/service-worker.js`               | Cache installation, request handling and release cleanup           |
 
-- **Install on Any Device**: Works on Android, iOS, Windows, and macOS
-- **Full Offline Support**: All application features work without internet
-- **Caching**: Key resources are cached for improved performance
-- **Installation Guides**:
-  - **Android**: Tap menu (⋮) > "Install app"
-  - **iOS**: Tap share button (⎋) > "Add to Home Screen"
-  - **Desktop**: Click install icon in address bar
+Data flows from the validated form to Dexie. Its live queries refresh lists and counts after changes, including writes from another tab. A failed save keeps the form open; a failed read displays a retryable error instead of an empty collection.
 
-## Project Structure
+Unfiltered category pages use a compound category/date index and read only the requested page. Text search ranks matching entries before pagination and currently scans the selected collection; it is intended for personal collections rather than a full-text search workload. New images are decoded sequentially, resized to a maximum of 1600 pixels on the longest side, and re-encoded for storage. Existing image data is preserved.
 
-- `/app` - Next.js app router components and pages
-- `/components` - Reusable UI components
-  - `/ui` - Generic UI components based on shadcn/ui
-  - `/templates` - Page layout templates
-- `/lib` - Utilities, database configuration, and context providers
-  - `/context` - React context providers
-  - `/hooks` - Custom React hooks for data and UI logic
-  - `/db` - Database configuration and operations
-- `/public` - Static assets and PWA files (manifest, icons, service worker)
-- `/types` - TypeScript type definitions
+## Offline releases and deployment
 
-## Performance Optimizations
+The worker precaches the static export, including Next.js navigation payloads and application chunks. Each build derives its cache revision from file contents. It serves a consistent release, handles static-route aliases and HEAD requests, and only cleans up this application's caches.
 
-- Pagination for efficient data loading and rendering
-- Optimized IndexedDB queries for faster data retrieval
-- Lazy loading of components to reduce initial load time
-- Debounced search to prevent excessive database queries
-- Service Worker caching for faster app loading and offline support
+A downloaded update activates after all tabs using the previous release close. This follows the [service-worker lifecycle](https://developer.chrome.com/docs/workbox/service-worker-lifecycle) and avoids replacing resources underneath an open form. Reopen the app to use the installed update.
 
-## Deployment
+GitHub Actions deploys **pushes to `main` only**. It installs the frozen lockfile, audits dependencies, runs lint, type checking and tests, then builds and publishes `out/` to `gh-pages`. The production base path is defined in `lib/config/site.mjs`; the manifest also targets `/kirsh_vault/`.
 
-This project is configured to deploy automatically to GitHub Pages using GitHub Actions workflow. Any push to the main branch will trigger a new build and deployment.
+Security and cache headers must be configured by the hosting provider. Next.js `headers()` is not available for a static export.
 
-## Contributing
+## Storage and privacy
 
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+There is no account, backend API, analytics or cloud synchronization. Entries and images are stored in IndexedDB for the current browser profile and origin. They are not encrypted and should not contain passwords or other secrets.
 
-### Development Workflow
+Clearing site data, changing browsers or browser storage eviction can remove or separate the collection. Offline caching does not back up IndexedDB. The app currently has no export/import or cloud recovery feature. Browser storage limits and persistence vary by platform; see [MDN's storage guide](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria).
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Ensure tests pass (`bun run test`)
-4. Commit your changes (`git commit -m 'Add some amazing feature'`)
-5. Push to the branch (`git push origin feature/amazing-feature`)
-6. Open a Pull Request
+## Main libraries
+
+Next.js · React · TypeScript · Dexie and dexie-react-hooks · React Hook Form and Zod · Radix UI · Tailwind CSS · Motion · React Hot Toast · Vitest and Testing Library.
+
+Dependency versions are pinned in `package.json` where appropriate and resolved in `bun.lock`. Keep the lockfile with dependency changes and run the checks above before deployment.
