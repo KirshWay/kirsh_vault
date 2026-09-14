@@ -73,14 +73,60 @@ export function Dropzone({
   });
 
   return (
-    <div className={cn('min-w-0 space-y-3', className)} aria-busy={isProcessing}>
-      <p role="status" aria-atomic="true" className="text-xs text-muted-foreground">
+    <div
+      className={cn(
+        'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2',
+        className
+      )}
+      aria-busy={isProcessing}
+    >
+      <p
+        role="status"
+        aria-atomic="true"
+        className="col-start-1 row-start-1 flex min-h-8 items-center text-xs text-muted-foreground"
+      >
         {images.length} of {maxFiles} images
       </p>
+      <div
+        {...getRootProps({
+          role: 'button',
+          'aria-label': hasImages ? 'Add more images' : 'Add images',
+          'aria-disabled': isDisabled,
+          tabIndex: isDisabled ? -1 : 0,
+        })}
+        className={cn(
+          'flex items-center justify-center rounded-lg border border-dashed text-center transition-colors focus-visible:outline-2 focus-visible:outline-ring',
+          hasImages ? 'col-start-2 row-start-1 min-h-8 px-2' : 'col-span-2 row-start-2 h-42 p-3',
+          isDisabled
+            ? 'cursor-default border-border bg-muted/40'
+            : 'cursor-pointer border-muted-foreground/40 hover:border-primary/50 hover:bg-primary/5',
+          isDragActive && 'border-primary bg-primary/5'
+        )}
+      >
+        <input {...getInputProps({ 'aria-label': 'Choose images', disabled: isDisabled })} />
+        <div className={cn('flex items-center justify-center gap-2', !hasImages && 'flex-col')}>
+          <Upload
+            className={cn('shrink-0 text-muted-foreground', hasImages ? 'size-4' : 'size-8')}
+          />
+          <div className="space-y-1">
+            <p className={cn('font-medium', hasImages ? 'text-xs' : 'text-sm')}>
+              {isProcessing
+                ? 'Processing images...'
+                : isAtLimit
+                  ? 'Image limit reached'
+                  : hasImages
+                    ? 'Add more images'
+                    : 'Choose images'}
+            </p>
+            {!hasImages && <p className="text-xs text-muted-foreground">or drag and drop here</p>}
+          </div>
+        </div>
+      </div>
       {hasImages && (
         <ul
           aria-label="Selected images"
-          className="grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-3"
+          tabIndex={0}
+          className="col-span-2 row-start-2 grid h-42 grid-flow-col auto-cols-[6.5rem] items-start gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain rounded-lg p-1 focus-visible:outline-2 focus-visible:outline-ring"
         >
           {imageEntries(images).map(({ src: image, key }, index) => (
             <li key={key} className="min-w-0 rounded-lg border bg-background p-1.5">
@@ -90,7 +136,7 @@ export function Dropzone({
                   src={image}
                   alt={`Upload ${index + 1}`}
                   fill
-                  sizes="(max-width: 768px) 33vw, 112px"
+                  sizes="90px"
                   className="object-contain"
                 />
               </div>
@@ -113,50 +159,11 @@ export function Dropzone({
           ))}
         </ul>
       )}
-      <div
-        {...getRootProps({
-          role: 'button',
-          'aria-label': hasImages ? 'Add more images' : 'Add images',
-          'aria-disabled': isDisabled,
-          tabIndex: isDisabled ? -1 : 0,
-        })}
-        className={cn(
-          'rounded-lg border border-dashed p-3 text-center transition-colors focus-visible:outline-2 focus-visible:outline-ring',
-          isDisabled
-            ? 'cursor-default border-border bg-muted/40'
-            : 'cursor-pointer border-muted-foreground/40 hover:border-primary/50 hover:bg-primary/5',
-          isDragActive && 'border-primary bg-primary/5'
-        )}
-      >
-        <input {...getInputProps({ 'aria-label': 'Choose images', disabled: isDisabled })} />
-        <div
-          className={cn(
-            'flex items-center justify-center gap-2',
-            hasImages ? 'py-1' : 'flex-col py-5'
-          )}
-        >
-          <Upload
-            className={cn('shrink-0 text-muted-foreground', hasImages ? 'size-4' : 'size-8')}
-          />
-          <div className="space-y-1">
-            <p className="text-sm font-medium">
-              {isProcessing
-                ? 'Processing images...'
-                : isAtLimit
-                  ? 'Image limit reached'
-                  : hasImages
-                    ? 'Add more images'
-                    : 'Choose images'}
-            </p>
-            {!hasImages && <p className="text-xs text-muted-foreground">or drag and drop here</p>}
-          </div>
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="col-span-2 text-xs text-muted-foreground">
         JPEG, PNG or WebP · Up to {maxSize / 1024 / 1024} MB each
       </p>
       {errors.length > 0 && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="col-span-2 text-sm text-destructive">
           {errors.join(' ')}
         </p>
       )}

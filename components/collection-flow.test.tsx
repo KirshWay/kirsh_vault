@@ -105,12 +105,14 @@ test('a pending save disables repeated submission until it settles', async () =>
     fireEvent.click(submit);
   });
   expect(submit).toBeDisabled();
+  expect(submit).toHaveAccessibleName('Saving…');
   fireEvent.click(submit);
   expect(save).toHaveBeenCalledTimes(1);
   await act(async () => {
     finish(true);
   });
   expect(submit).toBeEnabled();
+  expect(submit).toHaveAccessibleName('Update Item');
 });
 
 test('a failed initial read is shown as an error instead of an empty collection', async () => {

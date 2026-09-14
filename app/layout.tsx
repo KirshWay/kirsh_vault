@@ -3,7 +3,6 @@ import './globals.css';
 import { Metadata, Viewport } from 'next';
 import { Toaster } from 'react-hot-toast';
 
-import { MotionProvider } from '@/components/MotionProvider';
 import { NavMenu } from '@/components/NavMenu';
 import { ServiceWorkerInit } from '@/components/ServiceWorkerInit';
 import { BASE_PATH } from '@/lib/config/site.mjs';
@@ -63,14 +62,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <MotionProvider>
-          <DbProvider>
-            <NavMenu />
-            {children}
-            <Toaster position="bottom-right" />
-            <ServiceWorkerInit />
-          </DbProvider>
-        </MotionProvider>
+        <DbProvider>
+          <NavMenu />
+          {children}
+          <Toaster position="bottom-right" />
+          <ServiceWorkerInit />
+        </DbProvider>
       </body>
     </html>
   );

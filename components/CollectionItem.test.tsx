@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 
 import { CollectionItem } from '@/lib/db';
@@ -88,16 +88,15 @@ describe('CollectionItemComponent', () => {
     expect(ratingElement).not.toBeInTheDocument();
   });
 
-  test('should manage description visibility through expanded state', () => {
+  test('should manage description visibility through expanded state', async () => {
     const { rerender } = render(<CollectionItemComponent {...defaultProps} />);
 
-    const contentCollapsed = screen.getByText('Test description').closest('div');
-    expect(contentCollapsed).toHaveClass('max-h-0');
+    await waitFor(() => expect(screen.getByText('Test item')).toBeVisible());
+    expect(screen.getByText('Test description')).not.toBeVisible();
 
     rerender(<CollectionItemComponent {...defaultProps} isExpanded={true} />);
 
-    const contentExpanded = screen.getByText('Test description').closest('div');
-    expect(contentExpanded).toHaveClass('max-h-96');
+    expect(screen.getByText('Test description')).toBeVisible();
   });
 
   test('should call onExpand when the expand button is clicked', () => {

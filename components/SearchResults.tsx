@@ -1,7 +1,5 @@
 'use client';
 
-import { AnimatePresence, motion } from 'motion/react';
-
 import { CollectionItemComponent } from '@/components/CollectionItem';
 import { EmptyState } from '@/components/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
@@ -38,65 +36,38 @@ export const SearchResults = ({
   expandedItemId,
   pagination,
 }: Props) => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-      },
-    },
-  };
-
   if ((isSearching || isFiltering) && items.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.2 }}
-        className="my-8"
-      >
+      <div className="my-8">
         <EmptyState
           message={
             isSearching ? `Nothing found for "${searchQuery}"` : 'No items match these filters'
           }
         />
-      </motion.div>
+      </div>
     );
   }
 
   return (
     <>
       {isSearching && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 text-sm text-muted-foreground"
-        >
+        <div className="mb-4 text-sm text-muted-foreground">
           Found: {resultsCount} of {totalCount}
-        </motion.div>
+        </div>
       )}
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-      >
-        <AnimatePresence>
-          {items.map((item) => (
-            <CollectionItemComponent
-              key={item.id}
-              item={item}
-              onDelete={() => onItemDelete(item.id)}
-              onEdit={() => onItemEdit(item)}
-              isExpanded={expandedItemId === item.id}
-              onExpand={() => onItemExpand(item.id)}
-            />
-          ))}
-        </AnimatePresence>
-      </motion.div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map((item) => (
+          <CollectionItemComponent
+            key={item.id}
+            item={item}
+            onDelete={() => onItemDelete(item.id)}
+            onEdit={() => onItemEdit(item)}
+            isExpanded={expandedItemId === item.id}
+            onExpand={() => onItemExpand(item.id)}
+          />
+        ))}
+      </div>
 
       {pagination && pagination.totalPages > 1 && (
         <div className="mt-8 flex justify-center">

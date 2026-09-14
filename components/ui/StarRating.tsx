@@ -52,12 +52,12 @@ export function StarRating({
   return (
     <div
       {...props}
-      className={cn('flex items-center', className)}
+      className={cn('flex flex-wrap items-center gap-x-2 gap-y-1', className)}
       data-testid="star-rating"
       role="group"
       aria-label={readonly ? `Rating: ${value} out of ${maxValue}` : 'Rating'}
     >
-      <div className={cn('flex items-center', containerSizes[size])}>
+      <div className={cn('flex items-center', readonly ? containerSizes[size] : 'w-full max-w-70')}>
         {[...Array(starsToShow)].map((_, index) => {
           const starValue = index + 1;
           const isFullStar = activeValue >= starValue;
@@ -83,7 +83,7 @@ export function StarRating({
               type="button"
               aria-label={`Rate ${starValue} out of ${maxValue}`}
               aria-pressed={value === starValue}
-              className="relative cursor-pointer text-yellow-400 rounded focus-visible:outline-2 focus-visible:outline-ring"
+              className="relative inline-flex h-8 min-w-6 flex-1 items-center justify-center cursor-pointer text-yellow-400 rounded focus-visible:outline-2 focus-visible:outline-ring"
               onClick={() => handleStarClick(starValue)}
               onMouseEnter={() => setHoverValue(starValue)}
               onMouseLeave={() => setHoverValue(null)}
@@ -97,7 +97,7 @@ export function StarRating({
       {showValue && (
         <span
           className={cn(
-            'ml-2 font-medium',
+            'font-medium tabular-nums',
             size === 'sm' && 'text-xs',
             size === 'md' && 'text-sm',
             size === 'lg' && 'text-base'

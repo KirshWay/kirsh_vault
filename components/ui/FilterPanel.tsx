@@ -1,7 +1,6 @@
 'use client';
 
 import { Bookmark, Check, Filter, Star, X } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -290,11 +289,7 @@ export function FilterPanel({
 
       <div className="flex flex-wrap gap-2">
         {categoryFilter && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-          >
+          <div>
             <Badge
               variant="secondary"
               className="flex items-center gap-1.5 h-8 px-3 cursor-default"
@@ -304,22 +299,18 @@ export function FilterPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-5 w-5 p-0 ml-1 rounded-full cursor-pointer"
+                className="h-6 w-6 p-0 ml-1 rounded-full cursor-pointer"
                 onClick={() => onCategoryFilterChange?.(null)}
               >
                 <X className="h-3 w-3" />
                 <span className="sr-only">Clear filter</span>
               </Button>
             </Badge>
-          </motion.div>
+          </div>
         )}
 
         {ratingFilter && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-          >
+          <div>
             <Badge
               variant="secondary"
               className="flex items-center gap-1.5 h-8 px-3 cursor-default"
@@ -329,14 +320,14 @@ export function FilterPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-5 w-5 p-0 ml-1 rounded-full"
+                className="h-6 w-6 p-0 ml-1 rounded-full"
                 onClick={() => onRatingFilterChange(null)}
               >
                 <X className="h-3 w-3" />
                 <span className="sr-only">Clear filter</span>
               </Button>
             </Badge>
-          </motion.div>
+          </div>
         )}
       </div>
     </div>

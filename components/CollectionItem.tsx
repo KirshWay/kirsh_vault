@@ -1,7 +1,6 @@
 'use client';
 
 import { ChevronDown, Image as ImageIcon, Pencil, Trash } from 'lucide-react';
-import { motion } from 'motion/react';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -44,13 +43,7 @@ export const CollectionItemComponent = ({
 
   return (
     <>
-      <motion.div
-        layout
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ duration: 0.2 }}
-      >
+      <div className="min-w-0">
         <Card className="h-full flex flex-col overflow-hidden">
           {mainImage ? (
             <button
@@ -91,8 +84,8 @@ export const CollectionItemComponent = ({
 
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold line-clamp-2">{item.name}</h3>
+              <div className="min-w-0">
+                <h3 className="text-lg font-semibold line-clamp-2 break-words">{item.name}</h3>
                 <div className="flex items-center mt-1">
                   <span className="text-xs px-2 py-1 bg-secondary rounded-full">
                     {CATEGORIES[item.category]}
@@ -130,12 +123,11 @@ export const CollectionItemComponent = ({
             id={`item-details-${item.id}`}
             inert={!isExpanded}
             aria-hidden={!isExpanded}
-            className={cn(
-              'transition-all duration-300 overflow-hidden',
-              isExpanded ? 'max-h-96' : 'max-h-0 p-0'
-            )}
+            hidden={!isExpanded}
           >
-            <p className="text-sm text-muted-foreground">{item.description || 'No description'}</p>
+            <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
+              {item.description || 'No description'}
+            </p>
 
             {images.length > 1 && (
               <div className="mt-3 overflow-x-auto pb-2">
@@ -145,7 +137,7 @@ export const CollectionItemComponent = ({
                       type="button"
                       aria-label={`View image ${index + 1} for ${item.name}`}
                       key={key}
-                      className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden cursor-pointer ring-offset-background transition-all hover:ring-2 hover:ring-ring hover:ring-offset-2"
+                      className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-md overflow-hidden cursor-pointer ring-offset-background transition-shadow hover:ring-2 hover:ring-ring hover:ring-offset-2"
                       onClick={() => openImageViewer(index)}
                     >
                       <Image
@@ -181,7 +173,7 @@ export const CollectionItemComponent = ({
             </div>
           </CardFooter>
         </Card>
-      </motion.div>
+      </div>
 
       {hasImages && (
         <ImageViewer

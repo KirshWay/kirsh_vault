@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
@@ -71,6 +71,16 @@ test('keyboard deletion of the final image returns focus to the upload control',
   await user.keyboard('{Enter}');
   expect(screen.queryByRole('img')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Add images' })).toHaveFocus();
+});
+
+test('keyboard navigation follows the upload control into the image strip', async () => {
+  const user = userEvent.setup();
+  render(<EditableImages initialImages={['/one.png']} />);
+  act(() => screen.getByRole('button', { name: 'Add more images' }).focus());
+  await user.tab();
+  expect(screen.getByRole('list', { name: 'Selected images' })).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole('button', { name: 'Remove image 1' })).toHaveFocus();
 });
 
 test('adding two files to four images never exceeds the five-image limit', async () => {

@@ -48,7 +48,8 @@ export const ItemFormModal = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
-        className="max-h-[85dvh] overflow-y-auto overscroll-contain sm:max-w-[425px]"
+        className="flex max-h-[90dvh] flex-col overflow-hidden md:max-w-2xl md:p-0 max-md:max-h-[90dvh] max-md:overflow-hidden max-md:p-0"
+        containerClassName="flex min-h-0 flex-col"
         onOpenAutoFocus={() => {
           returnFocusRef.current =
             document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -61,7 +62,7 @@ export const ItemFormModal = ({
           target?.focus();
         }}
       >
-        <DialogHeader>
+        <DialogHeader className="shrink-0 px-4 pb-4 pt-5 pr-14 text-left sm:px-6 sm:pt-6 sm:pr-14">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="sr-only">
             Enter item details. Changes are saved in this browser.

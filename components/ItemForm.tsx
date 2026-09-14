@@ -54,9 +54,9 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-4 md:col-span-1">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="flex min-h-0 flex-col">
+        <div className="min-h-0 overflow-y-auto overscroll-contain px-4 pb-5 sm:px-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="name"
@@ -100,12 +100,12 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
               control={form.control}
               name="description"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Optional description"
-                      className="resize-none min-h-[120px]"
+                      className="h-24 resize-none"
                       {...field}
                     />
                   </FormControl>
@@ -119,7 +119,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
                 control={form.control}
                 name="rating"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Rating</FormLabel>
                     <FormControl>
                       <StarRating value={field.value ?? 0} onChange={field.onChange} size="md" />
@@ -129,14 +129,11 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
                 )}
               />
             )}
-          </div>
-
-          <div className="md:col-span-1">
             <FormField
               control={form.control}
               name="images"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="min-w-0 sm:col-span-2">
                   <FormLabel>Images</FormLabel>
                   <Dropzone
                     onProcessingChange={setProcessingImages}
@@ -157,7 +154,7 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2 pt-2">
+        <div className="flex shrink-0 justify-end gap-2 border-t bg-background px-4 py-4 sm:px-6">
           <Button
             type="button"
             variant="outline"
@@ -172,7 +169,11 @@ export const ItemForm = ({ defaultValues, onSubmit, onCancel }: Props) => {
             className="cursor-pointer"
             disabled={form.formState.isSubmitting || processingImages}
           >
-            {defaultValues?.name ? 'Update' : 'Add'} Item
+            {form.formState.isSubmitting
+              ? 'Saving…'
+              : defaultValues?.name
+                ? 'Update Item'
+                : 'Add Item'}
           </Button>
         </div>
       </form>

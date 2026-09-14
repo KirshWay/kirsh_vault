@@ -108,7 +108,7 @@ export function ImageViewer({ images, open, onOpenChange, initialIndex = 0 }: Pr
                   <button
                     key={key}
                     className={cn(
-                      'w-12 h-12 sm:w-16 sm:h-16 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all cursor-pointer',
+                      'w-12 h-12 sm:w-16 sm:h-16 rounded-md overflow-hidden flex-shrink-0 border-2 transition-[border-color,opacity] cursor-pointer',
                       currentIndex === idx
                         ? 'border-primary'
                         : 'border-transparent opacity-60 hover:opacity-100'

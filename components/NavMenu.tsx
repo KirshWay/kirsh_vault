@@ -1,14 +1,12 @@
 'use client';
 
 import { Home, Menu, X } from 'lucide-react';
-import { motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { CATEGORY_CONFIG } from '@/lib/config/categories';
-import { cn } from '@/lib/utils';
 
 const menuItems = [
   { title: 'Home', href: '/', icon: Home },
@@ -22,6 +20,32 @@ const menuItems = [
 export function NavMenu() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setIsOpen(false);
+      toggleRef.current?.focus();
+    };
+    const handleOutside = (event: Event) => {
+      if (event.target instanceof Node && !mobileMenuRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    document.addEventListener('pointerdown', handleOutside);
+    document.addEventListener('focusin', handleOutside);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener('pointerdown', handleOutside);
+      document.removeEventListener('focusin', handleOutside);
+    };
+  }, [isOpen]);
 
   const links = (mobile: boolean) =>
     menuItems.map((item) => (
@@ -47,9 +71,10 @@ export function NavMenu() {
       <nav aria-label="Main navigation" className="hidden md:flex border-b">
         <div className="container mx-auto flex items-center space-x-1 h-16">{links(false)}</div>
       </nav>
-      <div className="md:hidden border-b">
+      <div ref={mobileMenuRef} className="md:hidden border-b">
         <div className="container mx-auto flex justify-between items-center h-14">
           <Button
+            ref={toggleRef}
             variant="ghost"
             onClick={() => setIsOpen((open) => !open)}
             className="p-2"
@@ -62,19 +87,14 @@ export function NavMenu() {
           <div className="font-semibold">Kirsh Vault</div>
           <div className="w-10" />
         </div>
-        <motion.nav
+        <nav
           id="mobile-navigation"
           aria-label="Mobile navigation"
-          className={cn(
-            'absolute w-full bg-background z-50 border-b shadow-lg',
-            !isOpen && 'hidden'
-          )}
-          initial={false}
-          animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
-          transition={{ duration: 0.2 }}
+          hidden={!isOpen}
+          className="absolute w-full bg-background z-50 border-b shadow-lg"
         >
           <div className="container py-4 flex flex-col space-y-1">{links(true)}</div>
-        </motion.nav>
+        </nav>
       </div>
     </>
   );

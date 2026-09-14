@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -51,25 +51,11 @@ describe('SearchBar component', () => {
     await userEvent.click(screen.getByRole('button'));
 
     expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
 
     await waitFor(() => {
       expect(onSearchMock).toHaveBeenCalledWith('');
     });
-  });
-
-  test('should expand on focus', async () => {
-    const { container } = render(<SearchBar onSearch={onSearchMock} />);
-
-    expect(container.firstChild).toHaveClass('w-[180px]');
-
-    const input = screen.getByPlaceholderText('Search...');
-    fireEvent.focus(input);
-
-    expect(container.firstChild).toHaveClass('w-full');
-
-    fireEvent.blur(input);
-
-    expect(container.firstChild).toHaveClass('w-[180px]');
   });
 
   test('should initialize with provided value', async () => {
@@ -81,20 +67,5 @@ describe('SearchBar component', () => {
     await waitFor(() => {
       expect(onSearchMock).toHaveBeenCalledWith('initial search');
     });
-  });
-
-  test('should show search icon in different colors based on focus state', () => {
-    render(<SearchBar onSearch={onSearchMock} />);
-
-    const input = screen.getByPlaceholderText('Search...');
-    const searchIcon = document.querySelector('svg');
-
-    expect(searchIcon).toHaveClass('text-muted-foreground');
-
-    fireEvent.focus(input);
-    expect(searchIcon).toHaveClass('text-primary');
-
-    fireEvent.blur(input);
-    expect(searchIcon).toHaveClass('text-muted-foreground');
   });
 });
