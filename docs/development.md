@@ -45,12 +45,14 @@ Regression tests cover real Dexie queries with an isolated in-memory IndexedDB i
 Run the browser suite against the production export at `/kirsh_vault/`:
 
 ```sh
-bunx playwright install chromium firefox webkit
+bunx playwright install chromium firefox
 bun run build
 bun run test:e2e
 ```
 
-Playwright runs headlessly and intercepts file selection before a native dialog can open. It exercises downloads, isolated browser contexts, multiple tabs, short mobile viewports and offline startup in Chromium, Firefox and WebKit. Gallery checks cover viewport bounds, zoom and pan, thumbnail counts, focus-loop boundaries, focus restoration and first-time offline loading. Native pinch, double-tap and swipe injection uses Chromium's debugging protocol; that specific scenario is skipped in Firefox and WebKit. The test server is local test infrastructure, not part of deployment. An optional, more expensive check processes a real image archive close to the 250 MiB limit and attaches timing measurements:
+Playwright runs headlessly and intercepts file selection before a native dialog can open. It exercises downloads, isolated browser contexts, multiple tabs, short mobile viewports and offline startup in Chromium and Firefox. Other browsers require manual verification. Gallery checks cover viewport bounds, zoom and pan, thumbnail counts, focus-loop boundaries, focus restoration and first-time offline loading. Native pinch, double-tap and swipe injection uses Chromium's debugging protocol; that specific scenario is skipped in Firefox. The test server is local test infrastructure, not part of deployment.
+
+An optional, more expensive check processes a real image archive close to the 250 MiB limit and attaches timing measurements:
 
 ```sh
 KIRSH_LARGE_BACKUP=1 bun run test:e2e -g 'near 250 MB' --workers=1
@@ -100,7 +102,7 @@ The worker precaches the static export, including Next.js navigation payloads, a
 
 A downloaded update activates after all tabs using the previous release close. This follows the [service-worker lifecycle](https://developer.chrome.com/docs/workbox/service-worker-lifecycle) and avoids replacing resources underneath an open form. Reopen the app to use the installed update.
 
-GitHub Actions checks pull requests and pushes to `main`: frozen dependency installation, audit, lint, type checking, unit/component tests, a production build, and Playwright tests in all three browsers against that exact static export. Browser reports are retained for seven days. A separate deployment job runs **only for pushes to `main`, after its required checks pass**, and publishes the verified `out/` artifact to `gh-pages`. Only this deployment job can write repository contents; React Doctor can update its PR summary comment. The near-limit archive benchmark remains opt-in. The production base path is defined in `lib/config/site.mjs`; the manifest also targets `/kirsh_vault/`.
+GitHub Actions checks pull requests and pushes to `main`: frozen dependency installation, audit, lint, type checking, unit/component tests, a production build, and Playwright tests in Chromium and Firefox against that exact static export. Browser reports are retained for seven days. A separate deployment job runs **only for pushes to `main`, after its required checks pass**, and publishes the verified `out/` artifact to `gh-pages`. Only this deployment job can write repository contents; React Doctor can update its PR summary comment. The near-limit archive benchmark remains opt-in. The production base path is defined in `lib/config/site.mjs`; the manifest also targets `/kirsh_vault/`.
 
 Security and cache headers must be configured by the hosting provider. Next.js `headers()` is not available for a static export.
 

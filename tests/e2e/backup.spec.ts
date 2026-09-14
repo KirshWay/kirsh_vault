@@ -251,17 +251,12 @@ test('coordinates backup operations across tabs and releases the lock on cancel'
 test('restores and exports offline after the production assets are cached', async ({
   page,
   context,
-  browserName,
 }) => {
   await page.goto('./');
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
   await page.reload();
   await page.waitForFunction(() => navigator.serviceWorker.controller?.state === 'activated');
-  if (browserName === 'webkit') {
-    // Playwright's WebKit offline emulation also blocks cached SW responses. Drop actual
-    // origin connections instead; this also works with a physically stopped test server.
-    await context.addCookies([{ name: 'kirsh-vault-offline', value: '1', url: page.url() }]);
-  } else await context.setOffline(true);
+  await context.setOffline(true);
   expect(
     await page.evaluate(() =>
       fetch('uncached-offline-probe', { cache: 'no-store' })

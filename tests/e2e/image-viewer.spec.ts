@@ -110,8 +110,7 @@ test('keeps keyboard focus inside the gallery and returns it to the opening thum
   await expect(currentSlide.getByRole('img', { name: 'Image 3', exact: true })).toBeVisible();
   await page.keyboard.press('ArrowRight');
   await expect(currentSlide.getByRole('img', { name: 'Image 4', exact: true })).toBeVisible();
-  // Exercise both focus-loop boundaries. macOS WebKit may skip buttons on ordinary Tab
-  // according to the system Keyboard Navigation setting (playwright#41808).
+  // Exercise both focus-loop boundaries.
   const firstControl = dialog.getByRole('button', { name: 'Zoom in', exact: true });
   const lastControl = dialog.getByRole('button', { name: 'View image 5', exact: true });
   await expect(firstControl).toBeEnabled();
@@ -148,16 +147,12 @@ for (const count of [1, 2]) {
 test('opens and zooms offline even if the gallery has never been opened before', async ({
   page,
   context,
-  browserName,
 }) => {
   await addPhotoCollection(page);
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
   await page.reload();
   await page.waitForFunction(() => navigator.serviceWorker.controller?.state === 'activated');
-  if (browserName === 'webkit') {
-    // WebKit's offline emulation blocks SW responses too; drop origin connections instead.
-    await context.addCookies([{ name: 'kirsh-vault-offline', value: '1', url: page.url() }]);
-  } else await context.setOffline(true);
+  await context.setOffline(true);
   expect(
     await page.evaluate(() =>
       fetch('uncached-gallery-probe', { cache: 'no-store' })

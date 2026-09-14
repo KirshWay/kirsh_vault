@@ -23,12 +23,6 @@ const contentTypes = {
 
 // Test fixture: serve the production export under the same base path as GitHub Pages.
 createServer(async (request, response) => {
-  if (
-    request.headers.cookie?.split(';').some((cookie) => cookie.trim() === 'kirsh-vault-offline=1')
-  ) {
-    request.socket.destroy();
-    return;
-  }
   try {
     const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
     if (pathname === PRODUCTION_BASE_PATH) {

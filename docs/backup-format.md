@@ -76,9 +76,9 @@ Restoration needs room for the current collection, staged images and the replace
 
 ## Browser verification
 
-The Playwright suite uses the actual static export under `/kirsh_vault/`. It intercepts the file chooser before clicking the restore action, so native file dialogs stay closed. It exercises safe creation after extreme-ID and empty restores, all three engines, independent contexts, exact image bytes, two-tab conflicts, retained drafts, operation locks, empty replacement, downloads from preview, lost completion notifications and a 375 × 568 viewport with reduced motion.
+The Playwright suite uses the actual static export under `/kirsh_vault/` in Chromium and Firefox. It intercepts the file chooser before clicking the restore action, so native file dialogs stay closed. It exercises safe creation after extreme-ID and empty restores, independent contexts, exact image bytes, two-tab conflicts, retained drafts, operation locks, empty replacement, downloads from preview, lost completion notifications and a 375 × 568 viewport with reduced motion.
 
-Offline tests first install the production service worker, then verify an uncached request fails while reload and backup still work. Chromium and Firefox use Playwright's offline emulation. For WebKit, the local fixture server drops network connections for the test context: its offline emulation also blocked cached service-worker responses in this environment. The real connection-drop check avoids treating that automation limitation as an application failure.
+Offline tests first install the production service worker, then enable Playwright's offline emulation and verify an uncached request fails while reload and backup still work.
 
 The service worker precaches the emitted backup chunks. Cached responses preserve the worker request URL, including bundler bootstrap parameters. This follows the browser's [response URL rules](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith#specifying_the_final_url_of_a_resource) and is covered by a regression test.
 
@@ -92,7 +92,6 @@ Measured on 2026-09-14 on macOS, Apple M3 Pro, 36 GiB RAM, with one headless bro
 | ---------------------- | ---------------------: | ------------------: | -----------------: | ----------------------------: |
 | Chromium 153.0.8010.12 |                 6.69 s |              1.63 s |            12.12 s |                         92 ms |
 | Firefox 155.0          |                11.37 s |              7.97 s |             8.72 s |                        111 ms |
-| WebKit 26.6            |                 6.56 s |              1.15 s |             4.16 s |                         98 ms |
 
 Validation timing includes file selection and waiting for an enabled confirmation. Replacement timing includes the next visible collection render, and export timing ends when the download action becomes available. A 50 ms interval sampled main-thread responsiveness through all phases; the reported gap includes the interval itself. This is a responsiveness check, not an FPS measurement. The downloaded archive was checked against the size cap; byte equality is covered separately by smaller PNG/JPEG/WebP round trips.
 

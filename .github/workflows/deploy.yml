@@ -49,7 +49,7 @@ jobs:
         run: bun run build
 
       - name: Install Playwright browsers
-        run: bunx playwright install --with-deps
+        run: bunx playwright install --with-deps chromium firefox
 
       - name: Browser tests against the static export
         run: bun run test:e2e

@@ -77,11 +77,11 @@ bun run build
 For browser tests, install the test browsers once and run against that production build:
 
 ```sh
-bunx playwright install --with-deps chromium firefox webkit
+bunx playwright install --with-deps chromium firefox
 bun run test:e2e
 ```
 
-Tests cover migration, byte-for-byte backup round trips, malformed archives, transaction rollback, cancellation, concurrent tabs, stale forms, gallery navigation and offline startup. Playwright runs headlessly in Chromium, Firefox and WebKit. Touch-gesture injection is additionally checked in Chromium emulation; it is not a physical-device test.
+Tests cover migration, byte-for-byte backup round trips, malformed archives, transaction rollback, cancellation, concurrent tabs, stale forms, gallery navigation and offline startup. Playwright runs headlessly in Chromium and Firefox. Touch-gesture injection is additionally checked in Chromium emulation; it is not a physical-device test.
 
 [GitHub Actions](.github/workflows/deploy.yml) runs the checks on pull requests and pushes to `main`. Only a successful push build on `main` publishes the tested `out/` artifact to `gh-pages`. [React Doctor](.github/workflows/react-doctor.yml) runs separately in advisory mode. See the [development guide](docs/development.md) for coverage, analysis settings and the optional large-backup benchmark.
 
